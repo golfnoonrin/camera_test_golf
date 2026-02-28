@@ -1,2 +1,467 @@
-
-<iframe src="https://script.google.com/macros/s/AKfycbwA_YT9fuyg2hQvUSNRVkiu3vQJby5D-W_wJbka4MeocHTpE-fnMg9t7PphtWXIpfoFfA/exec" allow="camera *;"></iframe>
+<!-- index.html -->
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Camera App</title>
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        background: #f5f5f5;
+      }
+      
+      .container {
+        background: white;
+        border-radius: 15px;
+        padding: 25px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+      }
+      
+      h1 {
+        color: #1a73e8;
+        margin-bottom: 20px;
+        font-size: 24px;
+      }
+      
+      #warning {
+        background: #fff3cd;
+        color: #856404;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        border-left: 4px solid #ffc107;
+        display: none;
+      }
+      
+      #warning a {
+        color: #1a73e8;
+        text-decoration: none;
+        font-weight: bold;
+      }
+      
+      #warning a:hover {
+        text-decoration: underline;
+      }
+      
+      .video-wrapper {
+        background: #000;
+        border-radius: 12px;
+        overflow: hidden;
+        margin-bottom: 20px;
+        position: relative;
+        min-height: 400px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      
+      #video {
+        width: 100%;
+        max-height: 500px;
+        object-fit: cover;
+      }
+      
+      #video.placeholder {
+        opacity: 0.5;
+      }
+      
+      .controls {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        justify-content: center;
+        margin: 20px 0;
+      }
+      
+      button {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 25px;
+        font-size: 16px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s;
+        min-width: 120px;
+      }
+      
+      button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      
+      .btn-primary {
+        background: #1a73e8;
+        color: white;
+      }
+      
+      .btn-primary:hover:not(:disabled) {
+        background: #1557b0;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(26,115,232,0.3);
+      }
+      
+      .btn-success {
+        background: #0f9d58;
+        color: white;
+      }
+      
+      .btn-success:hover:not(:disabled) {
+        background: #0b7c44;
+        transform: translateY(-2px);
+      }
+      
+      .btn-danger {
+        background: #d93025;
+        color: white;
+      }
+      
+      .btn-danger:hover:not(:disabled) {
+        background: #b12b1f;
+        transform: translateY(-2px);
+      }
+      
+      #status {
+        padding: 12px;
+        border-radius: 8px;
+        margin: 15px 0;
+        text-align: center;
+        font-weight: 500;
+      }
+      
+      .status-info {
+        background: #e8f0fe;
+        color: #1a73e8;
+      }
+      
+      .status-success {
+        background: #e6f4ea;
+        color: #0f9d58;
+      }
+      
+      .status-error {
+        background: #fce8e6;
+        color: #d93025;
+      }
+      
+      #preview {
+        margin-top: 20px;
+        text-align: center;
+      }
+      
+      #preview img {
+        max-width: 100%;
+        max-height: 300px;
+        border-radius: 8px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+      }
+      
+      .permission-guide {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 15px;
+        margin-top: 20px;
+        font-size: 14px;
+        color: #5f6368;
+        border: 1px solid #dadce0;
+      }
+      
+      .permission-guide ol {
+        margin: 10px 0 0 20px;
+      }
+      
+      .permission-guide li {
+        margin: 5px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>📷 แอพพลิเคชั่นกล้องเว็บแคม</h1>
+      
+      <!-- คำเตือนสำหรับ iframe -->
+      <div id="warning">
+        ⚠️ ตรวจพบว่าแอพกำลังทำงานใน iframe! 
+        <a href="#" onclick="openInNewTab(); return false;">คลิกที่นี่เพื่อเปิดในแท็บใหม่</a>
+        <br><small>การเปิดในแท็บใหม่จะช่วยให้ใช้งานกล้องได้</small>
+      </div>
+      
+      <!-- สถานะ -->
+      <div id="status" class="status-info">
+        🔄 กำลังตรวจสอบสถานะ...
+      </div>
+      
+      <!-- วิดีโอ -->
+      <div class="video-wrapper">
+        <video id="video" autoplay playsinline muted></video>
+      </div>
+      
+      <!-- ปุ่มควบคุม -->
+      <div class="controls">
+        <button id="startBtn" class="btn-primary" onclick="initCamera()">
+          🎥 เริ่มใช้งานกล้อง
+        </button>
+        <button id="captureBtn" class="btn-success" onclick="capturePhoto()" disabled>
+          📸 ถ่ายรูป
+        </button>
+        <button id="stopBtn" class="btn-danger" onclick="stopCamera()" disabled>
+          ⏹️ หยุดใช้งาน
+        </button>
+      </div>
+      
+      <!-- พื้นที่แสดงรูป -->
+      <div id="preview"></div>
+      
+      <!-- คู่มือการตั้งค่า -->
+      <div class="permission-guide">
+        <strong>🔧 วิธีแก้ไขถ้าใช้งานไม่ได้:</strong>
+        <ol>
+          <li>คลิกไอคอน🔒 หรือ i ที่อยู่หน้าช่อง URL</li>
+          <li>เลือก "Site Settings" หรือ "การตั้งค่าไซต์"</li>
+          <li>หา "Camera" หรือ "กล้อง" แล้วเปลี่ยนเป็น "Allow"</li>
+          <li>รีเฟรชหน้าเว็บและลองใหม่อีกครั้ง</li>
+        </ol>
+      </div>
+    </div>
+    
+    <script>
+      // ตัวแปร
+      let mediaStream = null;
+      let photoData = null;
+      
+      const video = document.getElementById('video');
+      const statusDiv = document.getElementById('status');
+      const startBtn = document.getElementById('startBtn');
+      const captureBtn = document.getElementById('captureBtn');
+      const stopBtn = document.getElementById('stopBtn');
+      const previewDiv = document.getElementById('preview');
+      const warningDiv = document.getElementById('warning');
+      
+      // ตรวจสอบว่าอยู่ใน iframe หรือไม่
+      function isInIframe() {
+        try {
+          return window.self !== window.top;
+        } catch (e) {
+          return true;
+        }
+      }
+      
+      // แสดงคำเตือนถ้าอยู่ใน iframe
+      if (isInIframe()) {
+        warningDiv.style.display = 'block';
+        updateStatus('⚠️ กำลังทำงานใน iframe กรุณาเปิดในแท็บใหม่', 'status-info');
+      }
+      
+      // ฟังก์ชันเปิดในแท็บใหม่
+      function openInNewTab() {
+        window.open(window.location.href, '_blank');
+      }
+      
+      // อัพเดทสถานะ
+      function updateStatus(message, className = 'status-info') {
+        statusDiv.textContent = message;
+        statusDiv.className = className;
+      }
+      
+      // ตรวจสอบการรองรับกล้อง
+      function checkCameraSupport() {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          updateStatus('❌ เบราว์เซอร์ของคุณไม่รองรับการใช้งานกล้อง', 'status-error');
+          return false;
+        }
+        return true;
+      }
+      
+      // ฟังก์ชันหลักในการเริ่มกล้อง
+      async function initCamera() {
+        if (!checkCameraSupport()) return;
+        
+        try {
+          updateStatus('📋 กำลังขออนุญาตใช้งานกล้อง...', 'status-info');
+          
+          // ขออนุญาตใช้งานกล้อง
+          const constraints = {
+            video: {
+              width: { ideal: 1280 },
+              height: { ideal: 720 },
+              facingMode: 'user'
+            },
+            audio: false
+          };
+          
+          mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
+          
+          // ต่อ stream เข้ากับ video
+          video.srcObject = mediaStream;
+          video.classList.remove('placeholder');
+          
+          // รอให้ video พร้อม
+          await new Promise((resolve) => {
+            video.onloadedmetadata = () => {
+              resolve();
+            };
+          });
+          
+          // เล่นวิดีโอ
+          await video.play();
+          
+          // อัพเดทปุ่ม
+          startBtn.disabled = true;
+          captureBtn.disabled = false;
+          stopBtn.disabled = false;
+          
+          updateStatus('✅ กล้องพร้อมใช้งานแล้ว', 'status-success');
+          
+        } catch (error) {
+          console.error('Camera error:', error);
+          handleCameraError(error);
+        }
+      }
+      
+      // จัดการ error ต่างๆ
+      function handleCameraError(error) {
+        let message = '❌ ';
+        
+        switch(error.name) {
+          case 'NotAllowedError':
+          case 'PermissionDeniedError':
+            message += 'ไม่ได้รับอนุญาตให้ใช้กล้อง\n';
+            message += '• คลิกที่ไอคอน🔒 ในช่อง URL\n';
+            message += '• เลือก "อนุญาตให้ใช้กล้อง"\n';
+            message += '• รีเฟรชหน้าเว็บ';
+            break;
+            
+          case 'NotFoundError':
+          case 'DevicesNotFoundError':
+            message += 'ไม่พบกล้องในอุปกรณ์นี้';
+            break;
+            
+          case 'NotReadableError':
+          case 'TrackStartError':
+            message += 'ไม่สามารถเข้าถึงกล้องได้ (อาจมีโปรแกรมอื่นใช้อยู่)';
+            break;
+            
+          case 'OverconstrainedError':
+          case 'ConstraintNotSatisfiedError':
+            message += 'ไม่สามารถใช้กล้องตามที่กำหนด';
+            break;
+            
+          case 'NotSupportedError':
+            message += 'เบราว์เซอร์ไม่รองรับการใช้งานกล้อง';
+            break;
+            
+          case 'SecurityError':
+            message += 'ข้อผิดพลาดด้านความปลอดภัย (ต้องใช้ HTTPS)';
+            break;
+            
+          default:
+            message += error.message || 'เกิดข้อผิดพลาดไม่ทราบสาเหตุ';
+        }
+        
+        updateStatus(message, 'status-error');
+        
+        // รีเซ็ตปุ่ม
+        startBtn.disabled = false;
+        captureBtn.disabled = true;
+        stopBtn.disabled = true;
+      }
+      
+      // ถ่ายรูป
+      function capturePhoto() {
+        if (!mediaStream) {
+          updateStatus('❌ กรุณาเปิดกล้องก่อน', 'status-error');
+          return;
+        }
+        
+        try {
+          // สร้าง canvas ชั่วคราว
+          const canvas = document.createElement('canvas');
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          
+          const context = canvas.getContext('2d');
+          context.drawImage(video, 0, 0, canvas.width, canvas.height);
+          
+          // แปลงเป็น base64
+          photoData = canvas.toDataURL('image/png');
+          
+          // แสดงรูป
+          previewDiv.innerHTML = `
+            <h3>📸 รูปที่ถ่าย:</h3>
+            <img src="${photoData}" alt="Captured photo">
+          `;
+          
+          updateStatus('✅ ถ่ายรูปเรียบร้อย', 'status-success');
+          
+        } catch (error) {
+          console.error('Capture error:', error);
+          updateStatus('❌ ไม่สามารถถ่ายรูปได้: ' + error.message, 'status-error');
+        }
+      }
+      
+      // หยุดใช้งานกล้อง
+      function stopCamera() {
+        if (mediaStream) {
+          mediaStream.getTracks().forEach(track => {
+            track.stop();
+          });
+          mediaStream = null;
+          
+          video.srcObject = null;
+          video.classList.add('placeholder');
+          
+          // รีเซ็ตปุ่ม
+          startBtn.disabled = false;
+          captureBtn.disabled = true;
+          stopBtn.disabled = true;
+          
+          updateStatus('⏹️ หยุดใช้งานกล้องแล้ว', 'status-info');
+        }
+      }
+      
+      // จัดการเมื่อออกจากหน้า
+      window.addEventListener('beforeunload', () => {
+        if (mediaStream) {
+          mediaStream.getTracks().forEach(track => track.stop());
+        }
+      });
+      
+      // จัดการเมื่อ visibility change
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden && mediaStream) {
+          video.pause();
+        } else if (!document.hidden && mediaStream && video.paused) {
+          video.play().catch(e => console.log('Play error:', e));
+        }
+      });
+      
+      // ตรวจสอบ permission ตอนโหลดหน้า
+      (async function checkInitialPermission() {
+        if (!checkCameraSupport()) return;
+        
+        try {
+          // ลองตรวจสอบสถานะ permission
+          if (navigator.permissions && navigator.permissions.query) {
+            const permissionStatus = await navigator.permissions.query({ name: 'camera' });
+            
+            if (permissionStatus.state === 'granted') {
+              updateStatus('✅ มีสิทธิ์ใช้งานกล้องแล้ว คลิก "เริ่มใช้งานกล้อง" ได้เลย', 'status-success');
+            } else if (permissionStatus.state === 'denied') {
+              updateStatus('❌ ถูกปฏิเสธการใช้งานกล้อง กรุณาเปลี่ยนการตั้งค่า', 'status-error');
+            } else {
+              updateStatus('📋 พร้อมใช้งาน คลิก "เริ่มใช้งานกล้อง" เพื่อขออนุญาต', 'status-info');
+            }
+          }
+        } catch (e) {
+          console.log('Cannot query permission:', e);
+          updateStatus('📋 พร้อมใช้งาน', 'status-info');
+        }
+      })();
+      
+    </script>
+  </body>
+</html>
