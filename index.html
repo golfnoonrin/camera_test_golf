@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>แอพถ่ายภาพง่ายๆ</title>
+    <title>แอพถ่ายภาพพร้อมเครื่องมือแก้ไข</title>
     <style>
         * {
             margin: 0;
@@ -26,7 +26,7 @@
             border-radius: 20px;
             padding: 20px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            max-width: 800px;
+            max-width: 1200px;
             width: 100%;
         }
 
@@ -35,6 +35,35 @@
             color: #333;
             margin-bottom: 20px;
             font-size: 24px;
+        }
+
+        .main-content {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .camera-section {
+            flex: 2;
+            min-width: 300px;
+        }
+
+        .editor-section {
+            flex: 1;
+            min-width: 250px;
+            background: #f5f5f5;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .editor-section h3 {
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 18px;
+            border-bottom: 2px solid #ddd;
+            padding-bottom: 10px;
         }
 
         .camera-container {
@@ -46,20 +75,21 @@
             aspect-ratio: 4/3;
         }
 
-        #video, #canvas {
+        #video, #canvas, #editedCanvas {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            object-fit: cover;
+            object-fit: contain;
+            background: #000;
         }
 
         #video {
             display: block;
         }
 
-        #canvas {
+        #canvas, #editedCanvas {
             display: none;
         }
 
@@ -87,12 +117,17 @@
             transform: scale(0.98);
         }
 
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
         #captureBtn {
             background: #4CAF50;
             color: white;
         }
 
-        #captureBtn:hover {
+        #captureBtn:hover:not(:disabled) {
             background: #45a049;
         }
 
@@ -101,7 +136,7 @@
             color: white;
         }
 
-        #downloadBtn:hover {
+        #downloadBtn:hover:not(:disabled) {
             background: #1e87db;
         }
 
@@ -110,7 +145,7 @@
             color: white;
         }
 
-        #resetBtn:hover {
+        #resetBtn:hover:not(:disabled) {
             background: #da190b;
         }
 
@@ -119,8 +154,77 @@
             color: white;
         }
 
-        #switchCameraBtn:hover {
+        #switchCameraBtn:hover:not(:disabled) {
             background: #e68900;
+        }
+
+        #applyEditBtn {
+            background: #9C27B0;
+            color: white;
+            width: 100%;
+            margin-top: 15px;
+        }
+
+        #applyEditBtn:hover:not(:disabled) {
+            background: #7B1FA2;
+        }
+
+        #cancelEditBtn {
+            background: #757575;
+            color: white;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .tool-group {
+            margin-bottom: 20px;
+            padding: 10px;
+            background: white;
+            border-radius: 10px;
+        }
+
+        .tool-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .tool-group input[type="range"] {
+            width: 100%;
+            margin-bottom: 5px;
+        }
+
+        .tool-group .value-display {
+            text-align: right;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .tool-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .tool-btn {
+            flex: 1;
+            min-width: 60px;
+            padding: 8px;
+            font-size: 14px;
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        .tool-btn:hover:not(:disabled) {
+            background: #d0d0d0;
+        }
+
+        .tool-btn.active {
+            background: #2196F3;
+            color: white;
         }
 
         .preview-container {
@@ -130,7 +234,7 @@
 
         #photoPreview {
             max-width: 100%;
-            max-height: 200px;
+            max-height: 150px;
             border-radius: 8px;
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
             display: none;
@@ -143,37 +247,101 @@
             font-size: 14px;
         }
 
-        @media (max-width: 600px) {
-            .container {
-                padding: 15px;
+        .note {
+            font-size: 12px;
+            color: #999;
+            margin-top: 5px;
+            text-align: center;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                flex-direction: column;
             }
             
-            button {
-                padding: 10px 20px;
-                font-size: 14px;
-                min-width: 100px;
+            .editor-section {
+                width: 100%;
             }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>📸 แอพถ่ายภาพง่ายๆ</h1>
+        <h1>📸 แอพถ่ายภาพพร้อมเครื่องมือแก้ไข</h1>
         
-        <div class="camera-container">
-            <video id="video" autoplay playsinline></video>
-            <canvas id="canvas"></canvas>
-        </div>
+        <div class="main-content">
+            <div class="camera-section">
+                <div class="camera-container">
+                    <video id="video" autoplay playsinline></video>
+                    <canvas id="canvas"></canvas>
+                    <canvas id="editedCanvas"></canvas>
+                </div>
 
-        <div class="controls">
-            <button id="captureBtn">📷 ถ่ายภาพ</button>
-            <button id="downloadBtn" disabled>💾 บันทึกลงเครื่อง</button>
-            <button id="resetBtn">🔄 ถ่ายใหม่</button>
-            <button id="switchCameraBtn">🔄 สลับกล้อง</button>
-        </div>
+                <div class="controls">
+                    <button id="captureBtn">📷 ถ่ายภาพ</button>
+                    <button id="downloadBtn" disabled>💾 บันทึก</button>
+                    <button id="resetBtn">🔄 ถ่ายใหม่</button>
+                    <button id="switchCameraBtn">🔄 สลับกล้อง</button>
+                </div>
 
-        <div class="preview-container">
-            <img id="photoPreview" alt="ตัวอย่างภาพ">
+                <div class="preview-container">
+                    <img id="photoPreview" alt="ตัวอย่างภาพ">
+                </div>
+            </div>
+
+            <div class="editor-section">
+                <h3>🎨 เครื่องมือแก้ไขภาพ</h3>
+                
+                <div class="tool-group">
+                    <label>🔄 หมุนภาพ (Rotate)</label>
+                    <div class="tool-buttons">
+                        <button class="tool-btn" id="rotateLeftBtn" disabled>↪️ ซ้าย</button>
+                        <button class="tool-btn" id="rotateRightBtn" disabled>↩️ ขวา</button>
+                        <button class="tool-btn" id="rotate180Btn" disabled>🔄 180°</button>
+                    </div>
+                </div>
+
+                <div class="tool-group">
+                    <label>🪞 พลิกภาพ (Flip)</label>
+                    <div class="tool-buttons">
+                        <button class="tool-btn" id="flipHorizontalBtn" disabled>↔️ แนวนอน</button>
+                        <button class="tool-btn" id="flipVerticalBtn" disabled>↕️ แนวตั้ง</button>
+                    </div>
+                </div>
+
+                <div class="tool-group">
+                    <label>✂️ ครอบตัด (Crop)</label>
+                    <select id="cropAspectRatio" disabled>
+                        <option value="free">อิสระ</option>
+                        <option value="1:1">1:1 (สี่เหลี่ยมจัตุรัส)</option>
+                        <option value="4:3">4:3 (มาตรฐาน)</option>
+                        <option value="16:9">16:9 (จอกว้าง)</option>
+                        <option value="3:4">3:4 (แนวตั้ง)</option>
+                    </select>
+                    <button class="tool-btn" id="startCropBtn" disabled>เริ่มครอบตัด</button>
+                    <button class="tool-btn" id="applyCropBtn" disabled style="display:none;">ยืนยันการครอบตัด</button>
+                    <button class="tool-btn" id="cancelCropBtn" disabled style="display:none;">ยกเลิก</button>
+                </div>
+
+                <div class="tool-group">
+                    <label>☀️ ความสว่าง (Brightness)</label>
+                    <input type="range" id="brightnessSlider" min="-100" max="100" value="0" disabled>
+                    <div class="value-display" id="brightnessValue">0</div>
+                </div>
+
+                <div class="tool-group">
+                    <label>🎛️ ความคมชัด (Contrast)</label>
+                    <input type="range" id="contrastSlider" min="-100" max="100" value="0" disabled>
+                    <div class="value-display" id="contrastValue">0</div>
+                </div>
+
+                <button id="applyEditBtn" disabled>✅ นำไปใช้</button>
+                <button id="cancelEditBtn" disabled>↩️ ยกเลิกการแก้ไข</button>
+                
+                <div class="note">
+                    * ครอบตัด: คลิกและลากบนภาพเพื่อเลือกพื้นที่
+                </div>
+            </div>
         </div>
 
         <div class="status" id="status">
@@ -186,6 +354,7 @@
             constructor() {
                 this.video = document.getElementById('video');
                 this.canvas = document.getElementById('canvas');
+                this.editedCanvas = document.getElementById('editedCanvas');
                 this.photoPreview = document.getElementById('photoPreview');
                 this.status = document.getElementById('status');
                 
@@ -193,10 +362,40 @@
                 this.downloadBtn = document.getElementById('downloadBtn');
                 this.resetBtn = document.getElementById('resetBtn');
                 this.switchCameraBtn = document.getElementById('switchCameraBtn');
+                this.applyEditBtn = document.getElementById('applyEditBtn');
+                this.cancelEditBtn = document.getElementById('cancelEditBtn');
+                
+                // เครื่องมือแก้ไข
+                this.rotateLeftBtn = document.getElementById('rotateLeftBtn');
+                this.rotateRightBtn = document.getElementById('rotateRightBtn');
+                this.rotate180Btn = document.getElementById('rotate180Btn');
+                this.flipHorizontalBtn = document.getElementById('flipHorizontalBtn');
+                this.flipVerticalBtn = document.getElementById('flipVerticalBtn');
+                this.startCropBtn = document.getElementById('startCropBtn');
+                this.applyCropBtn = document.getElementById('applyCropBtn');
+                this.cancelCropBtn = document.getElementById('cancelCropBtn');
+                this.cropAspectRatio = document.getElementById('cropAspectRatio');
+                this.brightnessSlider = document.getElementById('brightnessSlider');
+                this.contrastSlider = document.getElementById('contrastSlider');
+                this.brightnessValue = document.getElementById('brightnessValue');
+                this.contrastValue = document.getElementById('contrastValue');
                 
                 this.currentStream = null;
-                this.currentFacingMode = 'environment'; // เริ่มต้นที่กล้องหลัง
+                this.currentFacingMode = 'environment';
                 this.capturedImage = null;
+                this.editedImage = null;
+                this.originalImageData = null;
+                
+                // สถานะการแก้ไข
+                this.rotation = 0;
+                this.flipX = 1;
+                this.flipY = 1;
+                this.brightness = 0;
+                this.contrast = 0;
+                this.isCropping = false;
+                this.cropStart = { x: 0, y: 0 };
+                this.cropEnd = { x: 0, y: 0 };
+                this.isSelecting = false;
                 
                 this.init();
             }
@@ -213,7 +412,6 @@
 
             async startCamera() {
                 try {
-                    // หยุดสตรีมเก่าก่อนถ้ามี
                     if (this.currentStream) {
                         this.currentStream.getTracks().forEach(track => track.stop());
                     }
@@ -234,7 +432,6 @@
                     
                     this.showStatus('✅ กล้องพร้อมใช้งาน');
                     
-                    // รอให้วิดีโอโหลด
                     await new Promise((resolve) => {
                         this.video.onloadedmetadata = () => {
                             resolve();
@@ -252,64 +449,379 @@
                 this.downloadBtn.addEventListener('click', () => this.downloadPhoto());
                 this.resetBtn.addEventListener('click', () => this.resetCamera());
                 this.switchCameraBtn.addEventListener('click', () => this.switchCamera());
+                
+                // เครื่องมือแก้ไข
+                this.rotateLeftBtn.addEventListener('click', () => this.rotateImage(-90));
+                this.rotateRightBtn.addEventListener('click', () => this.rotateImage(90));
+                this.rotate180Btn.addEventListener('click', () => this.rotateImage(180));
+                this.flipHorizontalBtn.addEventListener('click', () => this.flipImage('horizontal'));
+                this.flipVerticalBtn.addEventListener('click', () => this.flipImage('vertical'));
+                this.startCropBtn.addEventListener('click', () => this.startCrop());
+                this.applyCropBtn.addEventListener('click', () => this.applyCrop());
+                this.cancelCropBtn.addEventListener('click', () => this.cancelCrop());
+                
+                this.brightnessSlider.addEventListener('input', (e) => {
+                    this.brightness = parseInt(e.target.value);
+                    this.brightnessValue.textContent = this.brightness;
+                    this.previewEdit();
+                });
+                
+                this.contrastSlider.addEventListener('input', (e) => {
+                    this.contrast = parseInt(e.target.value);
+                    this.contrastValue.textContent = this.contrast;
+                    this.previewEdit();
+                });
+                
+                this.applyEditBtn.addEventListener('click', () => this.applyEdit());
+                this.cancelEditBtn.addEventListener('click', () => this.cancelEdit());
+                
+                // Event listeners สำหรับการ crop
+                this.editedCanvas.addEventListener('mousedown', (e) => this.startCropSelection(e));
+                this.editedCanvas.addEventListener('mousemove', (e) => this.updateCropSelection(e));
+                this.editedCanvas.addEventListener('mouseup', () => this.endCropSelection());
+                this.editedCanvas.addEventListener('mouseleave', () => this.endCropSelection());
+                
+                // สำหรับ touch events บนมือถือ
+                this.editedCanvas.addEventListener('touchstart', (e) => this.startCropSelection(e));
+                this.editedCanvas.addEventListener('touchmove', (e) => this.updateCropSelection(e));
+                this.editedCanvas.addEventListener('touchend', () => this.endCropSelection());
             }
 
             capturePhoto() {
-                // ตั้งค่าขนาด canvas ให้เท่ากับวิดีโอ
                 this.canvas.width = this.video.videoWidth;
                 this.canvas.height = this.video.videoHeight;
                 
-                // วาดภาพจากวิดีโอลงบน canvas
                 const context = this.canvas.getContext('2d');
                 context.drawImage(this.video, 0, 0, this.canvas.width, this.canvas.height);
                 
-                // แปลง canvas เป็น data URL
                 this.capturedImage = this.canvas.toDataURL('image/png');
+                this.originalImageData = this.capturedImage;
                 
-                // แสดงตัวอย่างภาพ
-                this.photoPreview.src = this.capturedImage;
-                this.photoPreview.style.display = 'block';
+                // แสดงใน edited canvas
+                this.loadImageToEditedCanvas(this.capturedImage);
                 
-                // ซ่อนวิดีโอและแสดงภาพที่ถ่าย
                 this.video.style.display = 'none';
-                this.canvas.style.display = 'block';
+                this.canvas.style.display = 'none';
+                this.editedCanvas.style.display = 'block';
                 
-                // อัปเดตปุ่ม
                 this.captureBtn.disabled = true;
                 this.downloadBtn.disabled = false;
+                this.enableEditTools(true);
                 
                 this.showStatus('📸 ถ่ายภาพเรียบร้อย!');
             }
 
-            downloadPhoto() {
-                if (!this.capturedImage) return;
+            loadImageToEditedCanvas(imageData) {
+                const img = new Image();
+                img.onload = () => {
+                    this.editedCanvas.width = img.width;
+                    this.editedCanvas.height = img.height;
+                    const ctx = this.editedCanvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0);
+                };
+                img.src = imageData;
+            }
+
+            rotateImage(degrees) {
+                this.rotation = (this.rotation + degrees) % 360;
+                this.applyTransformation();
+            }
+
+            flipImage(direction) {
+                if (direction === 'horizontal') {
+                    this.flipX *= -1;
+                } else {
+                    this.flipY *= -1;
+                }
+                this.applyTransformation();
+            }
+
+            applyTransformation() {
+                const img = new Image();
+                img.onload = () => {
+                    // สร้าง canvas ชั่วคราวสำหรับการ transform
+                    const tempCanvas = document.createElement('canvas');
+                    const tempCtx = tempCanvas.getContext('2d');
+                    
+                    // คำนวณขนาดใหม่หลังจากหมุน
+                    let width = img.width;
+                    let height = img.height;
+                    
+                    if (this.rotation % 180 !== 0) {
+                        [width, height] = [height, width];
+                    }
+                    
+                    tempCanvas.width = width;
+                    tempCanvas.height = height;
+                    
+                    tempCtx.translate(width / 2, height / 2);
+                    tempCtx.rotate(this.rotation * Math.PI / 180);
+                    tempCtx.scale(this.flipX, this.flipY);
+                    tempCtx.drawImage(img, -img.width / 2, -img.height / 2);
+                    
+                    // อัปเดต edited canvas
+                    this.editedCanvas.width = width;
+                    this.editedCanvas.height = height;
+                    const ctx = this.editedCanvas.getContext('2d');
+                    ctx.drawImage(tempCanvas, 0, 0);
+                };
+                img.src = this.capturedImage;
+            }
+
+            startCrop() {
+                this.isCropping = true;
+                this.startCropBtn.style.display = 'none';
+                this.applyCropBtn.style.display = 'inline-block';
+                this.cancelCropBtn.style.display = 'inline-block';
+                this.showStatus('✂️ คลิกและลากบนภาพเพื่อเลือกพื้นที่ครอบตัด');
+            }
+
+            startCropSelection(e) {
+                if (!this.isCropping) return;
                 
-                // สร้างลิงก์สำหรับดาวน์โหลด
+                e.preventDefault();
+                const rect = this.editedCanvas.getBoundingClientRect();
+                const scaleX = this.editedCanvas.width / rect.width;
+                const scaleY = this.editedCanvas.height / rect.height;
+                
+                let clientX, clientY;
+                if (e.touches) {
+                    clientX = e.touches[0].clientX;
+                    clientY = e.touches[0].clientY;
+                } else {
+                    clientX = e.clientX;
+                    clientY = e.clientY;
+                }
+                
+                this.cropStart.x = (clientX - rect.left) * scaleX;
+                this.cropStart.y = (clientY - rect.top) * scaleY;
+                this.cropEnd.x = this.cropStart.x;
+                this.cropEnd.y = this.cropStart.y;
+                this.isSelecting = true;
+            }
+
+            updateCropSelection(e) {
+                if (!this.isCropping || !this.isSelecting) return;
+                
+                e.preventDefault();
+                const rect = this.editedCanvas.getBoundingClientRect();
+                const scaleX = this.editedCanvas.width / rect.width;
+                const scaleY = this.editedCanvas.height / rect.height;
+                
+                let clientX, clientY;
+                if (e.touches) {
+                    clientX = e.touches[0].clientX;
+                    clientY = e.touches[0].clientY;
+                } else {
+                    clientX = e.clientX;
+                    clientY = e.clientY;
+                }
+                
+                this.cropEnd.x = Math.max(0, Math.min(this.editedCanvas.width, (clientX - rect.left) * scaleX));
+                this.cropEnd.y = Math.max(0, Math.min(this.editedCanvas.height, (clientY - rect.top) * scaleY));
+                
+                this.drawCropRectangle();
+            }
+
+            endCropSelection() {
+                this.isSelecting = false;
+            }
+
+            drawCropRectangle() {
+                const ctx = this.editedCanvas.getContext('2d');
+                
+                // โหลดภาพเดิมอีกครั้ง
+                const img = new Image();
+                img.onload = () => {
+                    ctx.drawImage(img, 0, 0);
+                    
+                    // วาดสี่เหลี่ยมครอบตัด
+                    ctx.strokeStyle = '#00ff00';
+                    ctx.lineWidth = 2;
+                    ctx.setLineDash([5, 5]);
+                    
+                    const x = Math.min(this.cropStart.x, this.cropEnd.x);
+                    const y = Math.min(this.cropStart.y, this.cropEnd.y);
+                    const width = Math.abs(this.cropEnd.x - this.cropStart.x);
+                    const height = Math.abs(this.cropEnd.y - this.cropStart.y);
+                    
+                    ctx.strokeRect(x, y, width, height);
+                    
+                    // วาดพื้นที่มืดรอบนอก
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+                    ctx.fillRect(0, 0, this.editedCanvas.width, y);
+                    ctx.fillRect(0, y, x, height);
+                    ctx.fillRect(x + width, y, this.editedCanvas.width - x - width, height);
+                    ctx.fillRect(0, y + height, this.editedCanvas.width, this.editedCanvas.height - y - height);
+                };
+                img.src = this.capturedImage;
+            }
+
+            applyCrop() {
+                const x = Math.min(this.cropStart.x, this.cropEnd.x);
+                const y = Math.min(this.cropStart.y, this.cropEnd.y);
+                const width = Math.abs(this.cropEnd.x - this.cropStart.x);
+                const height = Math.abs(this.cropEnd.y - this.cropStart.y);
+                
+                if (width < 10 || height < 10) {
+                    this.showStatus('❌ พื้นที่ครอบตัดเล็กเกินไป');
+                    return;
+                }
+                
+                // สร้าง canvas ใหม่สำหรับภาพที่ครอบตัด
+                const cropCanvas = document.createElement('canvas');
+                cropCanvas.width = width;
+                cropCanvas.height = height;
+                const cropCtx = cropCanvas.getContext('2d');
+                
+                cropCtx.drawImage(this.editedCanvas, x, y, width, height, 0, 0, width, height);
+                
+                // อัปเดต capturedImage
+                this.capturedImage = cropCanvas.toDataURL('image/png');
+                
+                // รีเซ็ตค่า transformations
+                this.rotation = 0;
+                this.flipX = 1;
+                this.flipY = 1;
+                
+                // โหลดภาพใหม่
+                this.loadImageToEditedCanvas(this.capturedImage);
+                
+                // ปิดโหมด crop
+                this.cancelCrop();
+                this.showStatus('✅ ครอบตัดเรียบร้อย');
+            }
+
+            cancelCrop() {
+                this.isCropping = false;
+                this.startCropBtn.style.display = 'inline-block';
+                this.applyCropBtn.style.display = 'none';
+                this.cancelCropBtn.style.display = 'none';
+                
+                // โหลดภาพเดิมกลับมา
+                this.loadImageToEditedCanvas(this.capturedImage);
+            }
+
+            previewEdit() {
+                // แก้ไข brightness และ contrast
+                const ctx = this.editedCanvas.getContext('2d');
+                const imageData = ctx.getImageData(0, 0, this.editedCanvas.width, this.editedCanvas.height);
+                const data = imageData.data;
+                
+                for (let i = 0; i < data.length; i += 4) {
+                    // ปรับ brightness
+                    data[i] = Math.min(255, Math.max(0, data[i] + this.brightness));
+                    data[i + 1] = Math.min(255, Math.max(0, data[i + 1] + this.brightness));
+                    data[i + 2] = Math.min(255, Math.max(0, data[i + 2] + this.brightness));
+                    
+                    // ปรับ contrast
+                    const factor = (259 * (this.contrast + 255)) / (255 * (259 - this.contrast));
+                    data[i] = Math.min(255, Math.max(0, factor * (data[i] - 128) + 128));
+                    data[i + 1] = Math.min(255, Math.max(0, factor * (data[i + 1] - 128) + 128));
+                    data[i + 2] = Math.min(255, Math.max(0, factor * (data[i + 2] - 128) + 128));
+                }
+                
+                ctx.putImageData(imageData, 0, 0);
+            }
+
+            applyEdit() {
+                // บันทึกภาพที่แก้ไขแล้ว
+                this.editedImage = this.editedCanvas.toDataURL('image/png');
+                this.capturedImage = this.editedImage;
+                this.photoPreview.src = this.editedImage;
+                this.photoPreview.style.display = 'block';
+                
+                // รีเซ็ตค่าแก้ไข
+                this.brightness = 0;
+                this.contrast = 0;
+                this.brightnessSlider.value = 0;
+                this.contrastSlider.value = 0;
+                this.brightnessValue.textContent = '0';
+                this.contrastValue.textContent = '0';
+                
+                this.showStatus('✅ นำการแก้ไขไปใช้เรียบร้อย');
+            }
+
+            cancelEdit() {
+                // โหลดภาพเดิมกลับมา
+                this.loadImageToEditedCanvas(this.originalImageData);
+                this.capturedImage = this.originalImageData;
+                
+                // รีเซ็ตค่าแก้ไข
+                this.rotation = 0;
+                this.flipX = 1;
+                this.flipY = 1;
+                this.brightness = 0;
+                this.contrast = 0;
+                this.brightnessSlider.value = 0;
+                this.contrastSlider.value = 0;
+                this.brightnessValue.textContent = '0';
+                this.contrastValue.textContent = '0';
+                
+                this.showStatus('↩️ ยกเลิกการแก้ไข');
+            }
+
+            downloadPhoto() {
+                const imageToDownload = this.editedImage || this.capturedImage;
+                if (!imageToDownload) return;
+                
                 const link = document.createElement('a');
                 link.download = `ภาพถ่าย-${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.png`;
-                link.href = this.capturedImage;
+                link.href = imageToDownload;
                 link.click();
                 
                 this.showStatus('💾 บันทึกภาพเรียบร้อย!');
             }
 
             resetCamera() {
-                // แสดงวิดีโอและซ่อน canvas
                 this.video.style.display = 'block';
                 this.canvas.style.display = 'none';
+                this.editedCanvas.style.display = 'none';
                 this.photoPreview.style.display = 'none';
                 
-                // รีเซ็ตปุ่ม
                 this.captureBtn.disabled = false;
                 this.downloadBtn.disabled = true;
+                this.enableEditTools(false);
                 
                 this.capturedImage = null;
+                this.editedImage = null;
+                this.originalImageData = null;
+                
+                // รีเซ็ตค่าแก้ไข
+                this.rotation = 0;
+                this.flipX = 1;
+                this.flipY = 1;
+                this.brightness = 0;
+                this.contrast = 0;
+                this.brightnessSlider.value = 0;
+                this.contrastSlider.value = 0;
+                this.brightnessValue.textContent = '0';
+                this.contrastValue.textContent = '0';
                 
                 this.showStatus('🔄 พร้อมถ่ายภาพใหม่');
             }
 
+            enableEditTools(enabled) {
+                const tools = [
+                    this.rotateLeftBtn,
+                    this.rotateRightBtn,
+                    this.rotate180Btn,
+                    this.flipHorizontalBtn,
+                    this.flipVerticalBtn,
+                    this.startCropBtn,
+                    this.cropAspectRatio,
+                    this.brightnessSlider,
+                    this.contrastSlider,
+                    this.applyEditBtn,
+                    this.cancelEditBtn
+                ];
+                
+                tools.forEach(tool => {
+                    tool.disabled = !enabled;
+                });
+            }
+
             async switchCamera() {
-                // สลับระหว่างกล้องหน้าและหลัง
                 this.currentFacingMode = this.currentFacingMode === 'environment' ? 'user' : 'environment';
                 
                 this.showStatus('🔄 กำลังสลับกล้อง...');
@@ -329,9 +841,7 @@
             }
         }
 
-        // เริ่มต้นแอพเมื่อโหลดหน้าเว็บเสร็จ
         document.addEventListener('DOMContentLoaded', () => {
-            // ตรวจสอบว่าเบราว์เซอร์รองรับการเข้าถึงกล้องหรือไม่
             if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
                 document.getElementById('status').textContent = '❌ เบราว์เซอร์ของคุณไม่รองรับการเข้าถึงกล้อง';
                 return;
