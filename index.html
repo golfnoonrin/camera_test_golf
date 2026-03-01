@@ -3,781 +3,425 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>แอพถ่ายภาพพร้อมเครื่องมือแก้ไข</title>
+    <title>Photo Studio Pro - Drag & Crop</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: #0f172a;
             min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 20px;
+            padding: 15px;
         }
-
         .container {
-            background: white;
-            border-radius: 20px;
-            padding: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            max-width: 1200px;
+            background: #ffffff;
+            border-radius: 24px;
+            padding: 24px;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+            max-width: 1100px;
             width: 100%;
         }
-
-        h1 {
-            text-align: center;
-            color: #333;
-            margin-bottom: 20px;
-            font-size: 24px;
-        }
-
-        .main-content {
-            display: flex;
-            gap: 20px;
-            flex-wrap: wrap;
-        }
-
-        .camera-section {
-            flex: 2;
-            min-width: 300px;
-        }
-
-        .editor-section {
-            flex: 1;
-            min-width: 250px;
-            background: #f5f5f5;
-            border-radius: 15px;
+        h1 { text-align: center; color: #1e293b; margin-bottom: 20px; font-size: 22px; }
+        .main-content { display: flex; gap: 20px; }
+        .camera-section { flex: 1.5; position: relative; }
+        .editor-section { 
+            flex: 1; 
+            background: #f8fafc; 
+            border-radius: 16px; 
             padding: 20px;
-            box-shadow: inset 0 2px 5px rgba(0,0,0,0.05);
+            border: 1px solid #e2e8f0;
         }
-
-        .editor-section h3 {
-            color: #333;
-            margin-bottom: 20px;
-            text-align: center;
-            font-size: 18px;
-            border-bottom: 2px solid #ddd;
-            padding-bottom: 10px;
-        }
-
         .camera-container {
             position: relative;
             width: 100%;
             background: #000;
-            border-radius: 10px;
+            border-radius: 12px;
             overflow: hidden;
             aspect-ratio: 4/3;
-            cursor: crosshair;
-        }
-
-        #video, #canvas, #editedCanvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            background: #000;
-            pointer-events: none;
-        }
-
-        #video {
-            display: block;
-            pointer-events: auto;
-        }
-
-        #canvas, #editedCanvas {
-            display: none;
-        }
-
-        #editedCanvas.crop-mode {
-            pointer-events: auto;
-            cursor: crosshair;
-        }
-
-        .controls {
-            margin-top: 20px;
             display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
             justify-content: center;
+            align-items: center;
+            cursor: default;
         }
-
+        #video, #editedCanvas {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+        .controls {
+            margin-top: 15px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+        }
         button {
-            padding: 12px 24px;
-            font-size: 16px;
+            padding: 12px;
             border: none;
-            border-radius: 8px;
+            border-radius: 10px;
             cursor: pointer;
             font-weight: 600;
-            transition: all 0.3s ease;
-            flex: 1 1 auto;
-            min-width: 120px;
+            transition: all 0.2s;
+            font-size: 14px;
         }
+        button:active { transform: scale(0.95); }
+        button:disabled { opacity: 0.3; cursor: not-allowed; }
 
-        button:active {
-            transform: scale(0.98);
-        }
-
-        button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        #captureBtn {
-            background: #4CAF50;
-            color: white;
-        }
-
-        #captureBtn:hover:not(:disabled) {
-            background: #45a049;
-        }
-
-        #downloadBtn {
-            background: #2196F3;
-            color: white;
-        }
-
-        #downloadBtn:hover:not(:disabled) {
-            background: #1e87db;
-        }
-
-        #resetBtn {
-            background: #f44336;
-            color: white;
-        }
-
-        #resetBtn:hover:not(:disabled) {
-            background: #da190b;
-        }
-
-        #switchCameraBtn {
-            background: #FF9800;
-            color: white;
-        }
-
-        #switchCameraBtn:hover:not(:disabled) {
-            background: #e68900;
-        }
-
-        #applyEditBtn {
-            background: #9C27B0;
-            color: white;
-            width: 100%;
-            margin-top: 15px;
-        }
-
-        #applyEditBtn:hover:not(:disabled) {
-            background: #7B1FA2;
-        }
-
-        #cancelEditBtn {
-            background: #757575;
-            color: white;
-            width: 100%;
-            margin-top: 10px;
-        }
+        #captureBtn { background: #10b981; color: white; }
+        #downloadBtn { background: #3b82f6; color: white; }
+        #resetBtn { background: #ef4444; color: white; }
+        #switchCameraBtn { background: #6366f1; color: white; }
 
         .tool-group {
-            margin-bottom: 20px;
-            padding: 10px;
+            margin-bottom: 15px;
+            padding: 12px;
             background: white;
-            border-radius: 10px;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
+        .tool-group label { display: block; font-size: 11px; font-weight: 700; color: #64748b; margin-bottom: 8px; text-transform: uppercase; }
+        .tool-buttons { display: flex; gap: 6px; flex-wrap: wrap; }
+        .tool-btn { flex: 1; padding: 8px; background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 13px; }
+        
+        .status { text-align: center; margin-top: 15px; color: #64748b; font-size: 14px; }
 
-        .tool-group label {
-            display: block;
-            margin-bottom: 8px;
-            color: #555;
-            font-weight: 500;
-            font-size: 14px;
-        }
-
-        .tool-buttons {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-            margin-top: 10px;
-        }
-
-        .tool-btn {
-            flex: 1;
-            min-width: 60px;
-            padding: 8px;
-            font-size: 14px;
-            background: #e0e0e0;
-            color: #333;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-
-        .tool-btn:hover:not(:disabled) {
-            background: #d0d0d0;
-        }
-
-        .tool-btn.active {
-            background: #2196F3;
-            color: white;
-        }
-
-        .tool-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        select {
-            width: 100%;
-            padding: 8px;
-            margin-bottom: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            font-size: 14px;
-        }
-
-        .status {
-            text-align: center;
-            margin-top: 10px;
-            color: #666;
-            font-size: 14px;
-        }
-
-        .note {
-            font-size: 12px;
-            color: #999;
-            margin-top: 5px;
-            text-align: center;
-        }
-
-        @media (max-width: 768px) {
-            .main-content {
-                flex-direction: column;
-            }
-            
-            .editor-section {
-                width: 100%;
-            }
+        @media (max-width: 850px) {
+            .main-content { flex-direction: column; }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>📸 แอพถ่ายภาพพร้อมเครื่องมือแก้ไข</h1>
-        
+        <h1>📸 Photo Studio JS - Pro Crop</h1>
         <div class="main-content">
             <div class="camera-section">
-                <div class="camera-container">
+                <div class="camera-container" id="camContainer">
                     <video id="video" autoplay playsinline></video>
-                    <canvas id="canvas"></canvas>
-                    <canvas id="editedCanvas"></canvas>
+                    <canvas id="editedCanvas" style="display: none;"></canvas>
                 </div>
-
                 <div class="controls">
                     <button id="captureBtn">📷 ถ่ายภาพ</button>
-                    <button id="downloadBtn" disabled>💾 บันทึก</button>
-                    <button id="resetBtn">🔄 ถ่ายใหม่</button>
                     <button id="switchCameraBtn">🔄 สลับกล้อง</button>
+                    <button id="resetBtn">🗑️ เริ่มใหม่</button>
+                    <button id="downloadBtn" disabled>💾 บันทึก</button>
                 </div>
             </div>
 
             <div class="editor-section">
-                <h3>🎨 เครื่องมือแก้ไขภาพ</h3>
-                
                 <div class="tool-group">
-                    <label>🔄 หมุนภาพ (Rotate)</label>
+                    <label>Rotate & Flip</label>
                     <div class="tool-buttons">
-                        <button class="tool-btn" id="rotateLeftBtn" disabled>↪️ ซ้าย</button>
-                        <button class="tool-btn" id="rotateRightBtn" disabled>↩️ ขวา</button>
-                        <button class="tool-btn" id="rotate180Btn" disabled>🔄 180°</button>
+                        <button class="tool-btn" id="rotateLeftBtn" disabled>↪️ -90</button>
+                        <button class="tool-btn" id="rotateRightBtn" disabled>↩️ +90</button>
+                        <button class="tool-btn" id="flipHorizontalBtn" disabled>↔️ พลิก</button>
                     </div>
                 </div>
 
                 <div class="tool-group">
-                    <label>🪞 พลิกภาพ (Flip)</label>
-                    <div class="tool-buttons">
-                        <button class="tool-btn" id="flipHorizontalBtn" disabled>↔️ แนวนอน</button>
-                        <button class="tool-btn" id="flipVerticalBtn" disabled>↕️ แนวตั้ง</button>
-                    </div>
-                </div>
-
-                <div class="tool-group">
-                    <label>✂️ ครอบตัด (Crop)</label>
-                    <select id="cropAspectRatio" disabled>
-                        <option value="free">อิสระ</option>
-                        <option value="1:1">1:1 (สี่เหลี่ยมจัตุรัส)</option>
-                        <option value="4:3">4:3 (มาตรฐาน)</option>
-                        <option value="16:9">16:9 (จอกว้าง)</option>
-                        <option value="3:4">3:4 (แนวตั้ง)</option>
+                    <label>Crop Tool (ลากขยับขอบเขตได้)</label>
+                    <select id="cropAspectRatio" disabled style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #ddd; margin-bottom: 10px;">
+                        <option value="free">อิสระ (Free)</option>
+                        <option value="1">1:1 (Square)</option>
+                        <option value="1.33">4:3 (Standard)</option>
+                        <option value="1.77">16:9 (Widescreen)</option>
+                        <option value="0.75">3:4 (Portrait)</option>
                     </select>
                     <div class="tool-buttons">
-                        <button class="tool-btn" id="startCropBtn" disabled>เริ่มครอบตัด</button>
-                        <button class="tool-btn" id="applyCropBtn" disabled style="display:none;">ยืนยัน</button>
-                        <button class="tool-btn" id="cancelCropBtn" disabled style="display:none;">ยกเลิก</button>
+                        <button class="tool-btn" id="startCropBtn" disabled>✂️ เริ่ม Crop</button>
+                        <button class="tool-btn" id="applyCropBtn" style="display:none; background: #10b981; color: white;">ยืนยัน</button>
+                        <button class="tool-btn" id="resetCropBtn" style="display:none; background: #64748b; color: white;">Reset ขอบ</button>
+                        <button class="tool-btn" id="cancelCropBtn" style="display:none; background: #ef4444; color: white;">ยกเลิก</button>
                     </div>
                 </div>
-
-                <button id="applyEditBtn" disabled>✅ นำไปใช้</button>
-                <button id="cancelEditBtn" disabled>↩️ ยกเลิกการแก้ไข</button>
-                
-                <div class="note">
-                    * ครอบตัด: คลิกและลากบนภาพเพื่อเลือกพื้นที่
-                </div>
+                <div class="status" id="status">กำลังเริ่มต้น...</div>
             </div>
-        </div>
-
-        <div class="status" id="status">
-            กำลังเปิดกล้อง...
         </div>
     </div>
 
     <script>
         class CameraApp {
             constructor() {
-                this.video = document.getElementById('video');
-                this.canvas = document.getElementById('canvas');
-                this.editedCanvas = document.getElementById('editedCanvas');
-                this.status = document.getElementById('status');
+                this.elements = {
+                    video: document.getElementById('video'),
+                    editedCanvas: document.getElementById('editedCanvas'),
+                    status: document.getElementById('status'),
+                    camContainer: document.getElementById('camContainer')
+                };
                 
-                this.captureBtn = document.getElementById('captureBtn');
-                this.downloadBtn = document.getElementById('downloadBtn');
-                this.resetBtn = document.getElementById('resetBtn');
-                this.switchCameraBtn = document.getElementById('switchCameraBtn');
-                this.applyEditBtn = document.getElementById('applyEditBtn');
-                this.cancelEditBtn = document.getElementById('cancelEditBtn');
-                
-                // เครื่องมือแก้ไข
-                this.rotateLeftBtn = document.getElementById('rotateLeftBtn');
-                this.rotateRightBtn = document.getElementById('rotateRightBtn');
-                this.rotate180Btn = document.getElementById('rotate180Btn');
-                this.flipHorizontalBtn = document.getElementById('flipHorizontalBtn');
-                this.flipVerticalBtn = document.getElementById('flipVerticalBtn');
-                this.startCropBtn = document.getElementById('startCropBtn');
-                this.applyCropBtn = document.getElementById('applyCropBtn');
-                this.cancelCropBtn = document.getElementById('cancelCropBtn');
-                this.cropAspectRatio = document.getElementById('cropAspectRatio');
-                
-                this.currentStream = null;
-                this.currentFacingMode = 'environment';
-                this.capturedImage = null;
-                this.editedImage = null;
-                this.originalImageData = null;
-                
-                // สถานะการแก้ไข
-                this.rotation = 0;
-                this.flipX = 1;
-                this.flipY = 1;
-                this.isCropping = false;
-                this.cropStart = { x: 0, y: 0 };
-                this.cropEnd = { x: 0, y: 0 };
-                this.isSelecting = false;
-                
+                this.state = {
+                    stream: null,
+                    facingMode: 'environment',
+                    isCropping: false,
+                    isSelecting: false, // โหมดสร้างขอบใหม่
+                    isDragging: false,  // โหมดลากย้ายขอบเดิม
+                    dragOffset: { x: 0, y: 0 },
+                    cropStart: { x: 0, y: 0 },
+                    cropEnd: { x: 0, y: 0 },
+                    aspectRatio: 'free'
+                };
+
+                this.bufferCanvas = document.createElement('canvas');
+                this.bufferCtx = this.bufferCanvas.getContext('2d');
+
                 this.init();
             }
 
             async init() {
-                try {
-                    await this.startCamera();
-                    this.setupEventListeners();
-                } catch (error) {
-                    this.showStatus('❌ ไม่สามารถเปิดกล้องได้: ' + error.message);
-                    console.error('Error initializing camera:', error);
-                }
+                await this.startCamera();
+                this.bindEvents();
             }
 
             async startCamera() {
                 try {
-                    if (this.currentStream) {
-                        this.currentStream.getTracks().forEach(track => track.stop());
-                    }
-
-                    const constraints = {
-                        video: {
-                            facingMode: this.currentFacingMode,
-                            width: { ideal: 1280 },
-                            height: { ideal: 720 }
-                        },
-                        audio: false
-                    };
-
-                    this.showStatus('กำลังขออนุญาตใช้กล้อง...');
-                    
-                    this.currentStream = await navigator.mediaDevices.getUserMedia(constraints);
-                    this.video.srcObject = this.currentStream;
-                    
-                    this.showStatus('✅ กล้องพร้อมใช้งาน');
-                    
-                    await new Promise((resolve) => {
-                        this.video.onloadedmetadata = () => {
-                            resolve();
-                        };
+                    if (this.state.stream) this.state.stream.getTracks().forEach(t => t.stop());
+                    this.state.stream = await navigator.mediaDevices.getUserMedia({
+                        video: { facingMode: this.state.facingMode, width: { ideal: 1920 }, height: { ideal: 1080 } }
                     });
-
-                } catch (error) {
-                    this.showStatus('❌ ไม่สามารถเปิดกล้องได้');
-                    throw error;
+                    this.elements.video.srcObject = this.state.stream;
+                    this.updateStatus('✅ กล้องพร้อม');
+                } catch (e) {
+                    this.updateStatus('❌ เข้าถึงกล้องไม่ได้');
                 }
             }
 
-            setupEventListeners() {
-                this.captureBtn.addEventListener('click', () => this.capturePhoto());
-                this.downloadBtn.addEventListener('click', () => this.downloadPhoto());
-                this.resetBtn.addEventListener('click', () => this.resetCamera());
-                this.switchCameraBtn.addEventListener('click', () => this.switchCamera());
-                
-                // เครื่องมือแก้ไข
-                this.rotateLeftBtn.addEventListener('click', () => this.rotateImage(-90));
-                this.rotateRightBtn.addEventListener('click', () => this.rotateImage(90));
-                this.rotate180Btn.addEventListener('click', () => this.rotateImage(180));
-                this.flipHorizontalBtn.addEventListener('click', () => this.flipImage('horizontal'));
-                this.flipVerticalBtn.addEventListener('click', () => this.flipImage('vertical'));
-                this.startCropBtn.addEventListener('click', () => this.startCrop());
-                this.applyCropBtn.addEventListener('click', () => this.applyCrop());
-                this.cancelCropBtn.addEventListener('click', () => this.cancelCrop());
-                
-                this.applyEditBtn.addEventListener('click', () => this.applyEdit());
-                this.cancelEditBtn.addEventListener('click', () => this.cancelEdit());
-                
-                // Event listeners สำหรับการ crop
-                this.editedCanvas.addEventListener('mousedown', (e) => this.startCropSelection(e));
-                this.editedCanvas.addEventListener('mousemove', (e) => this.updateCropSelection(e));
-                this.editedCanvas.addEventListener('mouseup', () => this.endCropSelection());
-                
-                // สำหรับ touch events บนมือถือ
-                this.editedCanvas.addEventListener('touchstart', (e) => this.startCropSelection(e));
-                this.editedCanvas.addEventListener('touchmove', (e) => this.updateCropSelection(e));
-                this.editedCanvas.addEventListener('touchend', () => this.endCropSelection());
-            }
-
-            capturePhoto() {
-                this.canvas.width = this.video.videoWidth;
-                this.canvas.height = this.video.videoHeight;
-                
-                const context = this.canvas.getContext('2d');
-                context.drawImage(this.video, 0, 0, this.canvas.width, this.canvas.height);
-                
-                this.capturedImage = this.canvas.toDataURL('image/png');
-                this.originalImageData = this.capturedImage;
-                
-                // แสดงใน edited canvas แทน video
-                this.loadImageToEditedCanvas(this.capturedImage);
-                
-                this.video.style.display = 'none';
-                this.canvas.style.display = 'none';
-                this.editedCanvas.style.display = 'block';
-                
-                this.captureBtn.disabled = true;
-                this.downloadBtn.disabled = false;
-                this.enableEditTools(true);
-                
-                this.showStatus('📸 ถ่ายภาพเรียบร้อย!');
-            }
-
-            loadImageToEditedCanvas(imageData) {
-                const img = new Image();
-                img.onload = () => {
-                    this.editedCanvas.width = img.width;
-                    this.editedCanvas.height = img.height;
-                    const ctx = this.editedCanvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0);
+            bindEvents() {
+                document.getElementById('captureBtn').onclick = () => this.capture();
+                document.getElementById('resetBtn').onclick = () => this.reset();
+                document.getElementById('switchCameraBtn').onclick = () => {
+                    this.state.facingMode = this.state.facingMode === 'user' ? 'environment' : 'user';
+                    this.startCamera();
                 };
-                img.src = imageData;
+                
+                document.getElementById('rotateLeftBtn').onclick = () => this.transform(-90, 1, 1);
+                document.getElementById('rotateRightBtn').onclick = () => this.transform(90, 1, 1);
+                document.getElementById('flipHorizontalBtn').onclick = () => this.transform(0, -1, 1);
+                
+                document.getElementById('startCropBtn').onclick = () => this.toggleCropMode(true);
+                document.getElementById('cancelCropBtn').onclick = () => this.toggleCropMode(false);
+                document.getElementById('applyCropBtn').onclick = () => this.executeCrop();
+                document.getElementById('resetCropBtn').onclick = () => this.resetCropArea();
+                document.getElementById('downloadBtn').onclick = () => this.download();
+                
+                const ec = this.elements.editedCanvas;
+                ec.onmousedown = (e) => this.handleStart(e);
+                ec.ontouchstart = (e) => this.handleStart(e);
+                window.onmousemove = (e) => this.handleMove(e);
+                window.ontouchmove = (e) => this.handleMove(e);
+                window.onmouseup = () => this.handleEnd();
+                window.ontouchend = () => this.handleEnd();
             }
 
-            rotateImage(degrees) {
-                this.rotation = (this.rotation + degrees) % 360;
-                this.applyTransformation();
+            capture() {
+                const { video, editedCanvas } = this.elements;
+                editedCanvas.width = video.videoWidth;
+                editedCanvas.height = video.videoHeight;
+                this.bufferCanvas.width = video.videoWidth;
+                this.bufferCanvas.height = video.videoHeight;
+
+                editedCanvas.getContext('2d').drawImage(video, 0, 0);
+                this.syncBuffer();
+
+                video.style.display = 'none';
+                editedCanvas.style.display = 'block';
+                this.setUIState(true);
             }
 
-            flipImage(direction) {
-                if (direction === 'horizontal') {
-                    this.flipX *= -1;
+            transform(deg, sx, sy) {
+                const canvas = this.elements.editedCanvas;
+                const temp = document.createElement('canvas');
+                const tCtx = temp.getContext('2d');
+                
+                if (Math.abs(deg) === 90) {
+                    temp.width = canvas.height; temp.height = canvas.width;
                 } else {
-                    this.flipY *= -1;
+                    temp.width = canvas.width; temp.height = canvas.height;
                 }
-                this.applyTransformation();
+
+                tCtx.translate(temp.width/2, temp.height/2);
+                tCtx.rotate(deg * Math.PI / 180);
+                tCtx.scale(sx, sy);
+                tCtx.drawImage(canvas, -canvas.width/2, -canvas.height/2);
+
+                canvas.width = temp.width;
+                canvas.height = temp.height;
+                canvas.getContext('2d').drawImage(temp, 0, 0);
+                this.syncBuffer();
             }
 
-            applyTransformation() {
-                const img = new Image();
-                img.onload = () => {
-                    // สร้าง canvas ชั่วคราวสำหรับการ transform
-                    const tempCanvas = document.createElement('canvas');
-                    const tempCtx = tempCanvas.getContext('2d');
-                    
-                    // คำนวณขนาดใหม่หลังจากหมุน
-                    let width = img.width;
-                    let height = img.height;
-                    
-                    if (this.rotation % 180 !== 0) {
-                        [width, height] = [height, width];
-                    }
-                    
-                    tempCanvas.width = width;
-                    tempCanvas.height = height;
-                    
-                    tempCtx.translate(width / 2, height / 2);
-                    tempCtx.rotate(this.rotation * Math.PI / 180);
-                    tempCtx.scale(this.flipX, this.flipY);
-                    tempCtx.drawImage(img, -img.width / 2, -img.height / 2);
-                    
-                    // อัปเดต edited canvas
-                    this.editedCanvas.width = width;
-                    this.editedCanvas.height = height;
-                    const ctx = this.editedCanvas.getContext('2d');
-                    ctx.drawImage(tempCanvas, 0, 0);
+            syncBuffer() {
+                this.bufferCanvas.width = this.elements.editedCanvas.width;
+                this.bufferCanvas.height = this.elements.editedCanvas.height;
+                this.bufferCtx.drawImage(this.elements.editedCanvas, 0, 0);
+            }
+
+            toggleCropMode(active) {
+                this.state.isCropping = active;
+                const display = active ? 'inline-block' : 'none';
+                document.getElementById('startCropBtn').style.display = active ? 'none' : 'inline-block';
+                document.getElementById('applyCropBtn').style.display = display;
+                document.getElementById('cancelCropBtn').style.display = display;
+                document.getElementById('resetCropBtn').style.display = display;
+                this.state.aspectRatio = document.getElementById('cropAspectRatio').value;
+                
+                if (active) this.resetCropArea();
+                else this.render();
+            }
+
+            resetCropArea() {
+                const c = this.elements.editedCanvas;
+                // ตั้งค่าขอบเขตเริ่มต้นเป็น 80% ของรูป
+                this.state.cropStart = { x: c.width * 0.1, y: c.height * 0.1 };
+                this.state.cropEnd = { x: c.width * 0.9, y: c.height * 0.9 };
+                this.render();
+            }
+
+            getPos(e) {
+                const rect = this.elements.editedCanvas.getBoundingClientRect();
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                return {
+                    x: (clientX - rect.left) * (this.elements.editedCanvas.width / rect.width),
+                    y: (clientY - rect.top) * (this.elements.editedCanvas.height / rect.height)
                 };
-                img.src = this.capturedImage;
             }
 
-            startCrop() {
-                this.isCropping = true;
-                this.startCropBtn.style.display = 'none';
-                this.applyCropBtn.style.display = 'inline-block';
-                this.cancelCropBtn.style.display = 'inline-block';
-                this.editedCanvas.classList.add('crop-mode');
-                this.showStatus('✂️ คลิกและลากบนภาพเพื่อเลือกพื้นที่ครอบตัด');
-            }
-
-            startCropSelection(e) {
-                if (!this.isCropping) return;
+            handleStart(e) {
+                if (!this.state.isCropping) return;
+                const pos = this.getPos(e);
                 
-                e.preventDefault();
-                const rect = this.editedCanvas.getBoundingClientRect();
-                
-                // คำนวณตำแหน่งใน canvas จริง (พิกเซล)
-                const canvasX = (e.clientX - rect.left) * (this.editedCanvas.width / rect.width);
-                const canvasY = (e.clientY - rect.top) * (this.editedCanvas.height / rect.height);
-                
-                // จำกัดไม่ให้เกินขอบเขต canvas
-                this.cropStart.x = Math.max(0, Math.min(this.editedCanvas.width, canvasX));
-                this.cropStart.y = Math.max(0, Math.min(this.editedCanvas.height, canvasY));
-                this.cropEnd.x = this.cropStart.x;
-                this.cropEnd.y = this.cropStart.y;
-                this.isSelecting = true;
-            }
-
-            updateCropSelection(e) {
-                if (!this.isCropping || !this.isSelecting) return;
-                
-                e.preventDefault();
-                const rect = this.editedCanvas.getBoundingClientRect();
-                
-                // คำนวณตำแหน่งใน canvas จริง (พิกเซล)
-                const canvasX = (e.clientX - rect.left) * (this.editedCanvas.width / rect.width);
-                const canvasY = (e.clientY - rect.top) * (this.editedCanvas.height / rect.height);
-                
-                // จำกัดไม่ให้เกินขอบเขต canvas
-                this.cropEnd.x = Math.max(0, Math.min(this.editedCanvas.width, canvasX));
-                this.cropEnd.y = Math.max(0, Math.min(this.editedCanvas.height, canvasY));
-                
-                this.drawCropRectangle();
-            }
-
-            endCropSelection() {
-                this.isSelecting = false;
-            }
-
-            drawCropRectangle() {
-                const ctx = this.editedCanvas.getContext('2d');
-                
-                // โหลดภาพเดิมอีกครั้ง
-                const img = new Image();
-                img.onload = () => {
-                    ctx.drawImage(img, 0, 0);
-                    
-                    // คำนวณพื้นที่ที่เลือก
-                    const x = Math.min(this.cropStart.x, this.cropEnd.x);
-                    const y = Math.min(this.cropStart.y, this.cropEnd.y);
-                    const width = Math.abs(this.cropEnd.x - this.cropStart.x);
-                    const height = Math.abs(this.cropEnd.y - this.cropStart.y);
-                    
-                    // วาดพื้นที่มืดรอบนอก
-                    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-                    ctx.fillRect(0, 0, this.editedCanvas.width, y);
-                    ctx.fillRect(0, y, x, height);
-                    ctx.fillRect(x + width, y, this.editedCanvas.width - x - width, height);
-                    ctx.fillRect(0, y + height, this.editedCanvas.width, this.editedCanvas.height - y - height);
-                    
-                    // วาดสี่เหลี่ยมครอบตัด
-                    ctx.strokeStyle = '#00ff00';
-                    ctx.lineWidth = 3;
-                    ctx.setLineDash([5, 5]);
-                    ctx.strokeRect(x, y, width, height);
-                    
-                    // วาดจุดจับที่มุม
-                    ctx.fillStyle = '#00ff00';
-                    ctx.fillRect(x - 3, y - 3, 6, 6);
-                    ctx.fillRect(x + width - 3, y - 3, 6, 6);
-                    ctx.fillRect(x - 3, y + height - 3, 6, 6);
-                    ctx.fillRect(x + width - 3, y + height - 3, 6, 6);
-                };
-                img.src = this.capturedImage;
-            }
-
-            applyCrop() {
-                const x = Math.min(this.cropStart.x, this.cropEnd.x);
-                const y = Math.min(this.cropStart.y, this.cropEnd.y);
-                const width = Math.abs(this.cropEnd.x - this.cropStart.x);
-                const height = Math.abs(this.cropEnd.y - this.cropStart.y);
-                
-                if (width < 10 || height < 10) {
-                    this.showStatus('❌ พื้นที่ครอบตัดเล็กเกินไป');
-                    return;
+                if (this.isInside(pos)) {
+                    this.state.isDragging = true;
+                    this.state.dragOffset = { x: pos.x - this.state.cropStart.x, y: pos.y - this.state.cropStart.y };
+                } else {
+                    this.state.isSelecting = true;
+                    this.state.cropStart = pos;
+                    this.state.cropEnd = pos;
                 }
-                
-                // สร้าง canvas ใหม่สำหรับภาพที่ครอบตัด
-                const cropCanvas = document.createElement('canvas');
-                cropCanvas.width = width;
-                cropCanvas.height = height;
-                const cropCtx = cropCanvas.getContext('2d');
-                
-                // ดึงภาพจาก editedCanvas มาครอบตัด
-                cropCtx.drawImage(this.editedCanvas, x, y, width, height, 0, 0, width, height);
-                
-                // อัปเดต capturedImage
-                this.capturedImage = cropCanvas.toDataURL('image/png');
-                
-                // รีเซ็ตค่า transformations
-                this.rotation = 0;
-                this.flipX = 1;
-                this.flipY = 1;
-                
-                // โหลดภาพใหม่ใน edited canvas โดยตรง (แสดงเต็ม canvas)
-                const img = new Image();
-                img.onload = () => {
-                    this.editedCanvas.width = img.width;
-                    this.editedCanvas.height = img.height;
-                    const ctx = this.editedCanvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, this.editedCanvas.width, this.editedCanvas.height);
-                };
-                img.src = this.capturedImage;
-                
-                // ปิดโหมด crop
-                this.cancelCrop();
-                this.showStatus('✅ ครอบตัดเรียบร้อย');
             }
 
-            cancelCrop() {
-                this.isCropping = false;
-                this.startCropBtn.style.display = 'inline-block';
-                this.applyCropBtn.style.display = 'none';
-                this.cancelCropBtn.style.display = 'none';
-                this.editedCanvas.classList.remove('crop-mode');
-                
-                // โหลดภาพเดิมกลับมา
-                this.loadImageToEditedCanvas(this.capturedImage);
+            handleMove(e) {
+                if (!this.state.isCropping) return;
+                const pos = this.getPos(e);
+
+                // เปลี่ยน Cursor ให้ผู้ใช้รู้ว่าลากได้
+                this.elements.editedCanvas.style.cursor = this.isInside(pos) ? 'move' : 'crosshair';
+
+                if (this.state.isSelecting) {
+                    this.state.cropEnd = pos;
+                    this.render();
+                } else if (this.state.isDragging) {
+                    const w = this.state.cropEnd.x - this.state.cropStart.x;
+                    const h = this.state.cropEnd.y - this.state.cropStart.y;
+                    this.state.cropStart.x = pos.x - this.state.dragOffset.x;
+                    this.state.cropStart.y = pos.y - this.state.dragOffset.y;
+                    this.state.cropEnd.x = this.state.cropStart.x + w;
+                    this.state.cropEnd.y = this.state.cropStart.y + h;
+                    this.constrain();
+                    this.render();
+                }
             }
 
-            applyEdit() {
-                // บันทึกภาพที่แก้ไขแล้ว
-                this.editedImage = this.editedCanvas.toDataURL('image/png');
-                this.capturedImage = this.editedImage;
-                
-                this.showStatus('✅ นำการแก้ไขไปใช้เรียบร้อย');
+            handleEnd() {
+                this.state.isSelecting = false;
+                this.state.isDragging = false;
             }
 
-            cancelEdit() {
-                // โหลดภาพเดิมกลับมา
-                this.loadImageToEditedCanvas(this.originalImageData);
-                this.capturedImage = this.originalImageData;
-                
-                // รีเซ็ตค่าแก้ไข
-                this.rotation = 0;
-                this.flipX = 1;
-                this.flipY = 1;
-                
-                this.showStatus('↩️ ยกเลิกการแก้ไข');
+            isInside(pos) {
+                const x = Math.min(this.state.cropStart.x, this.state.cropEnd.x);
+                const y = Math.min(this.state.cropStart.y, this.state.cropEnd.y);
+                const w = Math.abs(this.state.cropEnd.x - this.state.cropStart.x);
+                const h = Math.abs(this.state.cropEnd.y - this.state.cropStart.y);
+                return pos.x > x && pos.x < x+w && pos.y > y && pos.y < y+h;
             }
 
-            downloadPhoto() {
-                const imageToDownload = this.editedImage || this.capturedImage;
-                if (!imageToDownload) return;
+            constrain() {
+                const c = this.elements.editedCanvas;
+                const w = this.state.cropEnd.x - this.state.cropStart.x;
+                const h = this.state.cropEnd.y - this.state.cropStart.y;
+                if (this.state.cropStart.x < 0) { this.state.cropStart.x = 0; this.state.cropEnd.x = w; }
+                if (this.state.cropStart.y < 0) { this.state.cropStart.y = 0; this.state.cropEnd.y = h; }
+                if (this.state.cropEnd.x > c.width) { this.state.cropEnd.x = c.width; this.state.cropStart.x = c.width - w; }
+                if (this.state.cropEnd.y > c.height) { this.state.cropEnd.y = c.height; this.state.cropStart.y = c.height - h; }
+            }
+
+            render() {
+                const canvas = this.elements.editedCanvas;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(this.bufferCanvas, 0, 0);
+
+                if (!this.state.isCropping) return;
+
+                let x = Math.min(this.state.cropStart.x, this.state.cropEnd.x);
+                let y = Math.min(this.state.cropStart.y, this.state.cropEnd.y);
+                let w = Math.abs(this.state.cropEnd.x - this.state.cropStart.x);
+                let h = Math.abs(this.state.cropEnd.y - this.state.cropStart.y);
+
+                if (this.state.aspectRatio !== 'free') h = w / parseFloat(this.state.aspectRatio);
+
+                // Overlay
+                ctx.fillStyle = 'rgba(0,0,0,0.6)';
+                ctx.fillRect(0, 0, canvas.width, y);
+                ctx.fillRect(0, y + h, canvas.width, canvas.height - (y + h));
+                ctx.fillRect(0, y, x, h);
+                ctx.fillRect(x + w, y, canvas.width - (x + w), h);
+
+                // Stroke
+                ctx.strokeStyle = '#3b82f6';
+                ctx.lineWidth = 3;
+                ctx.strokeRect(x, y, w, h);
                 
+                // Corners
+                ctx.fillStyle = '#3b82f6';
+                const s = 10;
+                ctx.fillRect(x-s, y-s, s*2, s*2); ctx.fillRect(x+w-s, y-s, s*2, s*2);
+                ctx.fillRect(x-s, y+h-s, s*2, s*2); ctx.fillRect(x+w-s, y+h-s, s*2, s*2);
+            }
+
+            executeCrop() {
+                const canvas = this.elements.editedCanvas;
+                const x = Math.min(this.state.cropStart.x, this.state.cropEnd.x);
+                const y = Math.min(this.state.cropStart.y, this.state.cropEnd.y);
+                let w = Math.abs(this.state.cropEnd.x - this.state.cropStart.x);
+                let h = Math.abs(this.state.cropEnd.y - this.state.cropStart.y);
+                if (this.state.aspectRatio !== 'free') h = w / parseFloat(this.state.aspectRatio);
+
+                if (w < 10) return;
+
+                const temp = document.createElement('canvas');
+                temp.width = w; temp.height = h;
+                temp.getContext('2d').drawImage(this.bufferCanvas, x, y, w, h, 0, 0, w, h);
+
+                canvas.width = w; canvas.height = h;
+                canvas.getContext('2d').drawImage(temp, 0, 0);
+                this.syncBuffer();
+                this.toggleCropMode(false);
+            }
+
+            download() {
                 const link = document.createElement('a');
-                link.download = `ภาพถ่าย-${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.png`;
-                link.href = imageToDownload;
+                link.download = `photo-${Date.now()}.png`;
+                link.href = this.elements.editedCanvas.toDataURL();
                 link.click();
-                
-                this.showStatus('💾 บันทึกภาพเรียบร้อย!');
             }
 
-            resetCamera() {
-                this.video.style.display = 'block';
-                this.canvas.style.display = 'none';
-                this.editedCanvas.style.display = 'none';
-                this.editedCanvas.classList.remove('crop-mode');
-                
-                this.captureBtn.disabled = false;
-                this.downloadBtn.disabled = true;
-                this.enableEditTools(false);
-                
-                this.capturedImage = null;
-                this.editedImage = null;
-                this.originalImageData = null;
-                
-                // รีเซ็ตค่าแก้ไข
-                this.rotation = 0;
-                this.flipX = 1;
-                this.flipY = 1;
-                
-                // ซ่อนปุ่ม crop ถ้าค้างอยู่
-                this.cancelCrop();
-                
-                this.showStatus('🔄 พร้อมถ่ายภาพใหม่');
+            reset() {
+                this.elements.video.style.display = 'block';
+                this.elements.editedCanvas.style.display = 'none';
+                this.setUIState(false);
+                this.updateStatus('✅ พร้อมถ่ายภาพ');
             }
 
-            enableEditTools(enabled) {
-                const tools = [
-                    this.rotateLeftBtn,
-                    this.rotateRightBtn,
-                    this.rotate180Btn,
-                    this.flipHorizontalBtn,
-                    this.flipVerticalBtn,
-                    this.startCropBtn,
-                    this.cropAspectRatio,
-                    this.applyEditBtn,
-                    this.cancelEditBtn
-                ];
-                
-                tools.forEach(tool => {
-                    tool.disabled = !enabled;
-                });
+            setUIState(captured) {
+                const ids = ['downloadBtn', 'rotateLeftBtn', 'rotateRightBtn', 'flipHorizontalBtn', 'startCropBtn', 'cropAspectRatio'];
+                ids.forEach(id => document.getElementById(id).disabled = !captured);
+                document.getElementById('captureBtn').disabled = captured;
             }
 
-            async switchCamera() {
-                this.currentFacingMode = this.currentFacingMode === 'environment' ? 'user' : 'environment';
-                
-                this.showStatus('🔄 กำลังสลับกล้อง...');
-                
-                try {
-                    await this.startCamera();
-                    this.resetCamera();
-                    this.showStatus(`✅ เปลี่ยนเป็นกล้อง${this.currentFacingMode === 'environment' ? 'หลัง' : 'หน้า'}เรียบร้อย`);
-                } catch (error) {
-                    this.showStatus('❌ ไม่สามารถสลับกล้องได้');
-                    console.error('Error switching camera:', error);
-                }
-            }
-
-            showStatus(message) {
-                this.status.textContent = message;
-            }
+            updateStatus(msg) { this.elements.status.innerText = msg; }
         }
 
-        document.addEventListener('DOMContentLoaded', () => {
-            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                document.getElementById('status').textContent = '❌ เบราว์เซอร์ของคุณไม่รองรับการเข้าถึงกล้อง';
-                return;
-            }
-            
-            new CameraApp();
-        });
+        window.onload = () => new CameraApp();
     </script>
 </body>
 </html>
