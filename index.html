@@ -205,6 +205,9 @@
             font-size: 14px;
             background: #e0e0e0;
             color: #333;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
         }
 
         .tool-btn:hover:not(:disabled) {
@@ -216,6 +219,11 @@
             color: white;
         }
 
+        .tool-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
         select {
             width: 100%;
             padding: 8px;
@@ -223,19 +231,6 @@
             border: 1px solid #ddd;
             border-radius: 5px;
             font-size: 14px;
-        }
-
-        .preview-container {
-            margin-top: 20px;
-            text-align: center;
-        }
-
-        #photoPreview {
-            max-width: 100%;
-            max-height: 150px;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-            display: none;
         }
 
         .status {
@@ -280,10 +275,6 @@
                     <button id="downloadBtn" disabled>💾 บันทึก</button>
                     <button id="resetBtn">🔄 ถ่ายใหม่</button>
                     <button id="switchCameraBtn">🔄 สลับกล้อง</button>
-                </div>
-
-                <div class="preview-container">
-                    <img id="photoPreview" alt="ตัวอย่างภาพ">
                 </div>
             </div>
 
@@ -343,7 +334,6 @@
                 this.video = document.getElementById('video');
                 this.canvas = document.getElementById('canvas');
                 this.editedCanvas = document.getElementById('editedCanvas');
-                this.photoPreview = document.getElementById('photoPreview');
                 this.status = document.getElementById('status');
                 
                 this.captureBtn = document.getElementById('captureBtn');
@@ -467,7 +457,7 @@
                 this.capturedImage = this.canvas.toDataURL('image/png');
                 this.originalImageData = this.capturedImage;
                 
-                // แสดงใน edited canvas
+                // แสดงใน edited canvas แทน video
                 this.loadImageToEditedCanvas(this.capturedImage);
                 
                 this.video.style.display = 'none';
@@ -654,7 +644,7 @@
                 this.flipX = 1;
                 this.flipY = 1;
                 
-                // โหลดภาพใหม่
+                // โหลดภาพใหม่ใน edited canvas โดยตรง
                 this.loadImageToEditedCanvas(this.capturedImage);
                 
                 // ปิดโหมด crop
@@ -676,8 +666,6 @@
                 // บันทึกภาพที่แก้ไขแล้ว
                 this.editedImage = this.editedCanvas.toDataURL('image/png');
                 this.capturedImage = this.editedImage;
-                this.photoPreview.src = this.editedImage;
-                this.photoPreview.style.display = 'block';
                 
                 this.showStatus('✅ นำการแก้ไขไปใช้เรียบร้อย');
             }
@@ -711,7 +699,6 @@
                 this.video.style.display = 'block';
                 this.canvas.style.display = 'none';
                 this.editedCanvas.style.display = 'none';
-                this.photoPreview.style.display = 'none';
                 
                 this.captureBtn.disabled = false;
                 this.downloadBtn.disabled = true;
