@@ -257,7 +257,9 @@
 
                 this.elements.ratioSelect.onchange = (e) => {
                     this.state.aspectRatio = e.target.value;
-                    if (this.state.isCropping) this.applyRatioToArea();
+                    if (this.state.isCropping) {
+                        this.applyRatioToArea();
+                    }
                 };
 
                 const ec = this.elements.editedCanvas;
@@ -311,13 +313,20 @@
 
             resetCropArea() {
                 const c = this.elements.editedCanvas;
-                let w = c.width * 0.8;
-                let h = c.height * 0.8;
                 const ratio = this.state.aspectRatio === 'free' ? null : parseFloat(this.state.aspectRatio);
 
-                if (ratio) {
-                    if (ratio >= 1) h = w / ratio;
-                    else w = h * ratio;
+                let w = c.width * 0.8;
+                let h = c.height * 0.8;
+
+                if (ratio !== null) {
+                    if (ratio >= 1) {
+                        h = w / ratio;
+                    } else {
+                        w = h * ratio;
+                    }
+                    // ปรับให้พอดีขอบถ้าเกิน
+                    if (w > c.width) { w = c.width; h = w / ratio; }
+                    if (h > c.height) { h = c.height; w = h * ratio; }
                 }
 
                 this.state.cropArea = {
@@ -333,7 +342,21 @@
                 if (this.state.aspectRatio === 'free') return;
                 const ratio = parseFloat(this.state.aspectRatio);
                 const a = this.state.cropArea;
-                a.h = a.w / ratio;
+
+                const centerX = a.x + a.w / 2;
+                const centerY = a.y + a.h / 2;
+
+                if (ratio >= 1) {
+                    a.w = Math.min(a.w * 1.1, this.elements.editedCanvas.width * 0.9); // ขยายเล็กน้อยเพื่อให้เห็นการเปลี่ยน
+                    a.h = a.w / ratio;
+                } else {
+                    a.h = Math.min(a.h * 1.1, this.elements.editedCanvas.height * 0.9);
+                    a.w = a.h * ratio;
+                }
+
+                a.x = centerX - a.w / 2;
+                a.y = centerY - a.h / 2;
+
                 this.constrain();
                 this.render();
             }
@@ -380,45 +403,48 @@
 
                 if (this.state.isResizing) {
                     const h = this.state.isResizing;
+                    let proposedW = a.w;
+                    let proposedH = a.h;
+                    let proposedX = a.x;
+                    let proposedY = a.y;
 
                     switch (h) {
                         case 'br':
-                            a.w = Math.max(40, pos.x - a.x);
-                            a.h = ratio ? a.w / ratio : Math.max(40, pos.y - a.y);
+                            proposedW = Math.max(40, pos.x - a.x);
+                            proposedH = ratio ? proposedW / ratio : Math.max(40, pos.y - a.y);
                             break;
                         case 'tl':
-                            const dw = a.x - pos.x;
-                            a.w = Math.max(40, a.w + dw);
-                            a.x = pos.x;
+                            proposedW = Math.max(40, a.x + a.w - pos.x);
+                            proposedX = pos.x;
                             if (ratio) {
-                                const newH = a.w / ratio;
-                                a.y -= (newH - a.h);
-                                a.h = newH;
+                                proposedH = proposedW / ratio;
+                                proposedY = a.y + a.h - proposedH;
                             } else {
-                                const dh = a.y - pos.y;
-                                a.h = Math.max(40, a.h + dh);
-                                a.y = pos.y;
+                                proposedH = Math.max(40, a.y + a.h - pos.y);
+                                proposedY = pos.y;
                             }
                             break;
                         case 'tr':
-                            a.w = Math.max(40, pos.x - a.x);
+                            proposedW = Math.max(40, pos.x - a.x);
                             if (ratio) {
-                                const newH = a.w / ratio;
-                                a.y += (a.h - newH);
-                                a.h = newH;
+                                proposedH = proposedW / ratio;
+                                proposedY = a.y + a.h - proposedH;
                             } else {
-                                const dh = a.y - pos.y;
-                                a.h = Math.max(40, a.h + dh);
-                                a.y = pos.y;
+                                proposedH = Math.max(40, a.y + a.h - pos.y);
+                                proposedY = pos.y;
                             }
                             break;
                         case 'bl':
-                            const dw2 = a.x - pos.x;
-                            a.w = Math.max(40, a.w + dw2);
-                            a.x = pos.x;
-                            a.h = ratio ? a.w / ratio : Math.max(40, pos.y - a.y);
+                            proposedW = Math.max(40, a.x + a.w - pos.x);
+                            proposedX = pos.x;
+                            proposedH = ratio ? proposedW / ratio : Math.max(40, pos.y - a.y);
                             break;
                     }
+
+                    a.w = proposedW;
+                    a.h = proposedH;
+                    a.x = proposedX;
+                    a.y = proposedY;
 
                     this.constrain();
                     this.render();
