@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Photo Studio Pro - Ultimate Crop</title>
+    <title>Photo Studio Pro - Ultimate Edition</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body {
@@ -43,6 +43,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
+            touch-action: none;
         }
         #video, #editedCanvas {
             max-width: 100%;
@@ -83,6 +84,8 @@
         .tool-buttons { display: flex; gap: 6px; flex-wrap: wrap; }
         .tool-btn { flex: 1; padding: 8px; background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 13px; }
         
+        select { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 10px; outline: none; }
+
         .status { text-align: center; margin-top: 15px; color: #64748b; font-size: 14px; }
 
         @media (max-width: 850px) {
@@ -92,7 +95,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>📸 Photo Studio JS - Ultimate Crop</h1>
+        <h1>📸 Photo Studio JS - Ultimate Edition</h1>
         <div class="main-content">
             <div class="camera-section">
                 <div class="camera-container" id="camContainer">
@@ -118,12 +121,12 @@
                 </div>
 
                 <div class="tool-group">
-                    <label>Crop Tool (ลากขยับ & ดึงมุมได้)</label>
-                    <select id="cropAspectRatio" disabled style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #ddd; margin-bottom: 10px;">
+                    <label>Crop Settings</label>
+                    <select id="cropAspectRatio" disabled>
                         <option value="free">อิสระ (Free)</option>
                         <option value="1">1:1 (Square)</option>
-                        <option value="1.33">4:3 (Standard)</option>
-                        <option value="1.77">16:9 (Widescreen)</option>
+                        <option value="1.33333333333">4:3 (Standard)</option>
+                        <option value="1.77777777778">16:9 (Widescreen)</option>
                         <option value="0.75">3:4 (Portrait)</option>
                     </select>
                     <div class="tool-buttons">
@@ -144,7 +147,8 @@
                 this.elements = {
                     video: document.getElementById('video'),
                     editedCanvas: document.getElementById('editedCanvas'),
-                    status: document.getElementById('status')
+                    status: document.getElementById('status'),
+                    ratioSelect: document.getElementById('cropAspectRatio')
                 };
                 
                 this.state = {
@@ -152,11 +156,11 @@
                     facingMode: 'environment',
                     isCropping: false,
                     isDragging: false,
-                    isResizing: null, // เก็บว่ากำลังดึงมุมไหน (tl, tr, bl, br)
+                    isResizing: null,
                     dragOffset: { x: 0, y: 0 },
                     cropArea: { x: 0, y: 0, w: 0, h: 0 },
                     aspectRatio: 'free',
-                    handleSize: 12 // ขนาดของจุดที่มุมสำหรับการดึง
+                    handleSize: 14 
                 };
 
                 this.bufferCanvas = document.createElement('canvas');
@@ -198,6 +202,11 @@
                 document.getElementById('applyCropBtn').onclick = () => this.executeCrop();
                 document.getElementById('resetCropBtn').onclick = () => this.resetCropArea();
                 document.getElementById('downloadBtn').onclick = () => this.download();
+
+                this.elements.ratioSelect.onchange = (e) => {
+                    this.state.aspectRatio = e.target.value;
+                    if (this.state.isCropping) this.applyRatioToArea();
+                };
                 
                 const ec = this.elements.editedCanvas;
                 ec.onmousedown = (e) => this.handleStart(e);
@@ -234,7 +243,7 @@
                 document.getElementById('applyCropBtn').style.display = display;
                 document.getElementById('cancelCropBtn').style.display = display;
                 document.getElementById('resetCropBtn').style.display = display;
-                this.state.aspectRatio = document.getElementById('cropAspectRatio').value;
+                this.state.aspectRatio = this.elements.ratioSelect.value;
                 if (active) this.resetCropArea();
                 else this.render();
             }
@@ -242,13 +251,23 @@
             resetCropArea() {
                 const c = this.elements.editedCanvas;
                 this.state.cropArea = { x: c.width*0.1, y: c.height*0.1, w: c.width*0.8, h: c.height*0.8 };
+                this.applyRatioToArea();
+                this.render();
+            }
+
+            applyRatioToArea() {
+                if (this.state.aspectRatio === 'free') return;
+                const ratio = parseFloat(this.state.aspectRatio);
+                const a = this.state.cropArea;
+                a.h = a.w / ratio;
+                this.constrain();
                 this.render();
             }
 
             getPos(e) {
                 const rect = this.elements.editedCanvas.getBoundingClientRect();
-                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                const clientX = (e.touches && e.touches.length > 0) ? e.touches[0].clientX : e.clientX;
+                const clientY = (e.touches && e.touches.length > 0) ? e.touches[0].clientY : e.clientY;
                 return {
                     x: (clientX - rect.left) * (this.elements.editedCanvas.width / rect.width),
                     y: (clientY - rect.top) * (this.elements.editedCanvas.height / rect.height)
@@ -259,7 +278,6 @@
                 if (!this.state.isCropping) return;
                 const pos = this.getPos(e);
                 const handle = this.getHitHandle(pos);
-
                 if (handle) {
                     this.state.isResizing = handle;
                 } else if (this.isInside(pos)) {
@@ -271,9 +289,10 @@
             handleMove(e) {
                 if (!this.state.isCropping) return;
                 const pos = this.getPos(e);
-                const area = this.state.cropArea;
+                const a = this.state.cropArea;
+                const ratio = this.state.aspectRatio === 'free' ? null : parseFloat(this.state.aspectRatio);
 
-                // อัปเดต Cursor
+                // Cursor Update
                 const handle = this.getHitHandle(pos);
                 if (handle === 'tl' || handle === 'br') this.elements.editedCanvas.style.cursor = 'nwse-resize';
                 else if (handle === 'tr' || handle === 'bl') this.elements.editedCanvas.style.cursor = 'nesw-resize';
@@ -282,28 +301,29 @@
 
                 if (this.state.isResizing) {
                     const h = this.state.isResizing;
-                    const prevX = area.x, prevY = area.y;
-                    
-                    if (h === 'tl') {
-                        area.w += area.x - pos.x; area.h += area.y - pos.y;
-                        area.x = pos.x; area.y = pos.y;
+                    if (h === 'br') {
+                        a.w = pos.x - a.x;
+                        a.h = ratio ? a.w / ratio : pos.y - a.y;
+                    } else if (h === 'tl') {
+                        const dw = a.x - pos.x;
+                        a.w += dw; a.x = pos.x;
+                        a.h = ratio ? a.w / ratio : a.h + (a.y - pos.y);
+                        if (ratio) a.y -= (a.w / ratio) - (a.w - dw) / ratio; // Keep proportional
+                        else a.y = pos.y;
                     } else if (h === 'tr') {
-                        area.w = pos.x - area.x; area.h += area.y - pos.y;
-                        area.y = pos.y;
+                        a.w = pos.x - a.x;
+                        a.h = ratio ? a.w / ratio : a.h + (a.y - pos.y);
+                        if (!ratio) a.y = pos.y;
                     } else if (h === 'bl') {
-                        area.w += area.x - pos.x; area.x = pos.x;
-                        area.h = pos.y - area.y;
-                    } else if (h === 'br') {
-                        area.w = pos.x - area.x; area.h = pos.y - area.y;
+                        a.w += a.x - pos.x; a.x = pos.x;
+                        a.h = ratio ? a.w / ratio : pos.y - a.y;
                     }
-
-                    // ป้องกันความกว้าง/สูงติดลบ
-                    if (area.w < 20) area.w = 20;
-                    if (area.h < 20) area.h = 20;
+                    if (a.w < 30) a.w = 30; if (a.h < 30) a.h = 30;
+                    this.constrain();
                     this.render();
                 } else if (this.state.isDragging) {
-                    area.x = pos.x - this.state.dragOffset.x;
-                    area.y = pos.y - this.state.dragOffset.y;
+                    a.x = pos.x - this.state.dragOffset.x;
+                    a.y = pos.y - this.state.dragOffset.y;
                     this.constrain();
                     this.render();
                 }
@@ -313,7 +333,7 @@
 
             getHitHandle(pos) {
                 const { x, y, w, h } = this.state.cropArea;
-                const s = this.state.handleSize;
+                const s = this.state.handleSize * 1.5; // Area hit
                 if (Math.abs(pos.x - x) < s && Math.abs(pos.y - y) < s) return 'tl';
                 if (Math.abs(pos.x - (x+w)) < s && Math.abs(pos.y - y) < s) return 'tr';
                 if (Math.abs(pos.x - x) < s && Math.abs(pos.y - (y+h)) < s) return 'bl';
@@ -328,6 +348,7 @@
 
             constrain() {
                 const c = this.elements.editedCanvas, a = this.state.cropArea;
+                if (a.w > c.width) a.w = c.width; if (a.h > c.height) a.h = c.height;
                 if (a.x < 0) a.x = 0; if (a.y < 0) a.y = 0;
                 if (a.x + a.w > c.width) a.x = c.width - a.w;
                 if (a.y + a.h > c.height) a.y = c.height - a.h;
@@ -339,19 +360,16 @@
                 if (!this.state.isCropping) return;
 
                 const { x, y, w, h } = this.state.cropArea;
-                // Overlay มืด
                 ctx.fillStyle = 'rgba(0,0,0,0.6)';
                 ctx.fillRect(0, 0, canvas.width, y); ctx.fillRect(0, y+h, canvas.width, canvas.height-(y+h));
                 ctx.fillRect(0, y, x, h); ctx.fillRect(x+w, y, canvas.width-(x+w), h);
 
-                // กรอบสีฟ้า
                 ctx.strokeStyle = '#3b82f6'; ctx.lineWidth = 2; ctx.strokeRect(x, y, w, h);
                 
-                // จุดดึงมุมทั้ง 4 (Handles)
                 ctx.fillStyle = '#ffffff'; ctx.strokeStyle = '#3b82f6'; ctx.lineWidth = 2;
                 const s = this.state.handleSize;
                 [ [x, y], [x+w, y], [x, y+h], [x+w, y+h] ].forEach(p => {
-                    ctx.beginPath(); ctx.arc(p[0], p[1], s/1.5, 0, Math.PI*2);
+                    ctx.beginPath(); ctx.arc(p[0], p[1], s/2, 0, Math.PI*2);
                     ctx.fill(); ctx.stroke();
                 });
             }
@@ -364,6 +382,7 @@
                 canvas.width = a.w; canvas.height = a.h;
                 canvas.getContext('2d').drawImage(temp, 0, 0);
                 this.syncBuffer(); this.toggleCropMode(false);
+                this.updateStatus('✅ ครอบตัดสำเร็จ');
             }
 
             transform(deg, sx, sy) {
