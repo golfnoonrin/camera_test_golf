@@ -4,24 +4,25 @@
   <base target="_top">
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Camera App Fullscreen</title>
+  <title>Clinic App Fullscreen</title>
   <style>
-    /* ตั้งค่าให้ Body และ HTML ไม่มี Margin/Padding */
+    /* 1. กำหนดให้ไม่มีขอบและเต็มความสูงเสมอ */
     body, html {
       margin: 0;
       padding: 0;
       height: 100%;
       width: 100%;
-      overflow: hidden; /* ป้องกัน Scrollbar */
+      overflow: hidden; /* ป้องกันการเลื่อนหลุดขอบ */
+      background-color: #000; /* ใส่สีพื้นหลังกันขอบขาว */
     }
 
-    /* ตั้งค่า iframe ให้เต็มหน้าจอ */
+    /* 2. แก้ไขตรงนี้: เปลี่ยนจาก 900px เป็น 100% */
     iframe {
       position: absolute;
       top: 0;
       left: 0;
-      width: 900px;
-      height: 100%;
+      width: 100%;  /* ขยายเต็มความกว้างหน้าจอ */
+      height: 100%; /* ขยายเต็มความสูงหน้าจอ */
       border: none;
     }
   </style>
