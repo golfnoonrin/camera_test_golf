@@ -1,14 +1,39 @@
-<!-- index.html -->
 <!DOCTYPE html>
 <html>
-  <head>
-    <base target="_top">
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Camera App</title>
-  </head>
-  <body>
-    <iframe src="https://script.google.com/macros/s/AKfycbxmcxlvx0S2Pf-pfAB-KQpgG35f5vreE1B9vsXVwe6ixI0q9hr69Z4qIUCkM5rqKyY/exec" title="description"></iframe>
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Camera App Fullscreen</title>
+  <style>
+    /* ตั้งค่าให้ Body และ HTML ไม่มี Margin/Padding */
+    body, html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      width: 100%;
+      overflow: hidden; /* ป้องกัน Scrollbar */
+    }
 
-  </body>
+    /* ตั้งค่า iframe ให้เต็มหน้าจอ */
+    iframe {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+  </style>
+</head>
+<body>
+
+  <iframe 
+    src="https://script.google.com/macros/s/AKfycbxmcxlvx0S2Pf-pfAB-KQpgG35f5vreE1B9vsXVwe6ixI0q9hr69Z4qIUCkM5rqKyY/exec" 
+    title="Clinic App"
+    allow="camera; microphone; display-capture; geolocation;" 
+    allowfullscreen>
+  </iframe>
+
+</body>
 </html>
