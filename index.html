@@ -191,17 +191,6 @@
             font-size: 14px;
         }
 
-        .tool-group input[type="range"] {
-            width: 100%;
-            margin-bottom: 5px;
-        }
-
-        .tool-group .value-display {
-            text-align: right;
-            font-size: 12px;
-            color: #666;
-        }
-
         .tool-buttons {
             display: flex;
             gap: 8px;
@@ -225,6 +214,15 @@
         .tool-btn.active {
             background: #2196F3;
             color: white;
+        }
+
+        select {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
         }
 
         .preview-container {
@@ -318,21 +316,11 @@
                         <option value="16:9">16:9 (จอกว้าง)</option>
                         <option value="3:4">3:4 (แนวตั้ง)</option>
                     </select>
-                    <button class="tool-btn" id="startCropBtn" disabled>เริ่มครอบตัด</button>
-                    <button class="tool-btn" id="applyCropBtn" disabled style="display:none;">ยืนยันการครอบตัด</button>
-                    <button class="tool-btn" id="cancelCropBtn" disabled style="display:none;">ยกเลิก</button>
-                </div>
-
-                <div class="tool-group">
-                    <label>☀️ ความสว่าง (Brightness)</label>
-                    <input type="range" id="brightnessSlider" min="-100" max="100" value="0" disabled>
-                    <div class="value-display" id="brightnessValue">0</div>
-                </div>
-
-                <div class="tool-group">
-                    <label>🎛️ ความคมชัด (Contrast)</label>
-                    <input type="range" id="contrastSlider" min="-100" max="100" value="0" disabled>
-                    <div class="value-display" id="contrastValue">0</div>
+                    <div class="tool-buttons">
+                        <button class="tool-btn" id="startCropBtn" disabled>เริ่มครอบตัด</button>
+                        <button class="tool-btn" id="applyCropBtn" disabled style="display:none;">ยืนยัน</button>
+                        <button class="tool-btn" id="cancelCropBtn" disabled style="display:none;">ยกเลิก</button>
+                    </div>
                 </div>
 
                 <button id="applyEditBtn" disabled>✅ นำไปใช้</button>
@@ -375,10 +363,6 @@
                 this.applyCropBtn = document.getElementById('applyCropBtn');
                 this.cancelCropBtn = document.getElementById('cancelCropBtn');
                 this.cropAspectRatio = document.getElementById('cropAspectRatio');
-                this.brightnessSlider = document.getElementById('brightnessSlider');
-                this.contrastSlider = document.getElementById('contrastSlider');
-                this.brightnessValue = document.getElementById('brightnessValue');
-                this.contrastValue = document.getElementById('contrastValue');
                 
                 this.currentStream = null;
                 this.currentFacingMode = 'environment';
@@ -390,8 +374,6 @@
                 this.rotation = 0;
                 this.flipX = 1;
                 this.flipY = 1;
-                this.brightness = 0;
-                this.contrast = 0;
                 this.isCropping = false;
                 this.cropStart = { x: 0, y: 0 };
                 this.cropEnd = { x: 0, y: 0 };
@@ -459,18 +441,6 @@
                 this.startCropBtn.addEventListener('click', () => this.startCrop());
                 this.applyCropBtn.addEventListener('click', () => this.applyCrop());
                 this.cancelCropBtn.addEventListener('click', () => this.cancelCrop());
-                
-                this.brightnessSlider.addEventListener('input', (e) => {
-                    this.brightness = parseInt(e.target.value);
-                    this.brightnessValue.textContent = this.brightness;
-                    this.previewEdit();
-                });
-                
-                this.contrastSlider.addEventListener('input', (e) => {
-                    this.contrast = parseInt(e.target.value);
-                    this.contrastValue.textContent = this.contrast;
-                    this.previewEdit();
-                });
                 
                 this.applyEditBtn.addEventListener('click', () => this.applyEdit());
                 this.cancelEditBtn.addEventListener('click', () => this.cancelEdit());
@@ -702,42 +672,12 @@
                 this.loadImageToEditedCanvas(this.capturedImage);
             }
 
-            previewEdit() {
-                // แก้ไข brightness และ contrast
-                const ctx = this.editedCanvas.getContext('2d');
-                const imageData = ctx.getImageData(0, 0, this.editedCanvas.width, this.editedCanvas.height);
-                const data = imageData.data;
-                
-                for (let i = 0; i < data.length; i += 4) {
-                    // ปรับ brightness
-                    data[i] = Math.min(255, Math.max(0, data[i] + this.brightness));
-                    data[i + 1] = Math.min(255, Math.max(0, data[i + 1] + this.brightness));
-                    data[i + 2] = Math.min(255, Math.max(0, data[i + 2] + this.brightness));
-                    
-                    // ปรับ contrast
-                    const factor = (259 * (this.contrast + 255)) / (255 * (259 - this.contrast));
-                    data[i] = Math.min(255, Math.max(0, factor * (data[i] - 128) + 128));
-                    data[i + 1] = Math.min(255, Math.max(0, factor * (data[i + 1] - 128) + 128));
-                    data[i + 2] = Math.min(255, Math.max(0, factor * (data[i + 2] - 128) + 128));
-                }
-                
-                ctx.putImageData(imageData, 0, 0);
-            }
-
             applyEdit() {
                 // บันทึกภาพที่แก้ไขแล้ว
                 this.editedImage = this.editedCanvas.toDataURL('image/png');
                 this.capturedImage = this.editedImage;
                 this.photoPreview.src = this.editedImage;
                 this.photoPreview.style.display = 'block';
-                
-                // รีเซ็ตค่าแก้ไข
-                this.brightness = 0;
-                this.contrast = 0;
-                this.brightnessSlider.value = 0;
-                this.contrastSlider.value = 0;
-                this.brightnessValue.textContent = '0';
-                this.contrastValue.textContent = '0';
                 
                 this.showStatus('✅ นำการแก้ไขไปใช้เรียบร้อย');
             }
@@ -751,12 +691,6 @@
                 this.rotation = 0;
                 this.flipX = 1;
                 this.flipY = 1;
-                this.brightness = 0;
-                this.contrast = 0;
-                this.brightnessSlider.value = 0;
-                this.contrastSlider.value = 0;
-                this.brightnessValue.textContent = '0';
-                this.contrastValue.textContent = '0';
                 
                 this.showStatus('↩️ ยกเลิกการแก้ไข');
             }
@@ -791,12 +725,9 @@
                 this.rotation = 0;
                 this.flipX = 1;
                 this.flipY = 1;
-                this.brightness = 0;
-                this.contrast = 0;
-                this.brightnessSlider.value = 0;
-                this.contrastSlider.value = 0;
-                this.brightnessValue.textContent = '0';
-                this.contrastValue.textContent = '0';
+                
+                // ซ่อนปุ่ม crop ถ้าค้างอยู่
+                this.cancelCrop();
                 
                 this.showStatus('🔄 พร้อมถ่ายภาพใหม่');
             }
@@ -810,8 +741,6 @@
                     this.flipVerticalBtn,
                     this.startCropBtn,
                     this.cropAspectRatio,
-                    this.brightnessSlider,
-                    this.contrastSlider,
                     this.applyEditBtn,
                     this.cancelEditBtn
                 ];
