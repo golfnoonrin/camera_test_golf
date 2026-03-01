@@ -1,40 +1,344 @@
 <!DOCTYPE html>
-<html>
+<html lang="th">
 <head>
-  <base target="_top">
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Clinic App Fullscreen</title>
-  <style>
-    /* 1. กำหนดให้ไม่มีขอบและเต็มความสูงเสมอ */
-    body, html {
-      margin: 0;
-      padding: 0;
-      height: 100%;
-      width: 100%;
-      overflow: hidden; /* ป้องกันการเลื่อนหลุดขอบ */
-      background-color: #000; /* ใส่สีพื้นหลังกันขอบขาว */
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>แอพถ่ายภาพง่ายๆ</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-    /* 2. แก้ไขตรงนี้: เปลี่ยนจาก 900px เป็น 100% */
-    iframe {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;  /* ขยายเต็มความกว้างหน้าจอ */
-      height: 100%; /* ขยายเต็มความสูงหน้าจอ */
-      border: none;
-    }
-  </style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 800px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+
+        .camera-container {
+            position: relative;
+            width: 100%;
+            background: #000;
+            border-radius: 10px;
+            overflow: hidden;
+            aspect-ratio: 4/3;
+        }
+
+        #video, #canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        #video {
+            display: block;
+        }
+
+        #canvas {
+            display: none;
+        }
+
+        .controls {
+            margin-top: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        button {
+            padding: 12px 24px;
+            font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            flex: 1 1 auto;
+            min-width: 120px;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        #captureBtn {
+            background: #4CAF50;
+            color: white;
+        }
+
+        #captureBtn:hover {
+            background: #45a049;
+        }
+
+        #downloadBtn {
+            background: #2196F3;
+            color: white;
+        }
+
+        #downloadBtn:hover {
+            background: #1e87db;
+        }
+
+        #resetBtn {
+            background: #f44336;
+            color: white;
+        }
+
+        #resetBtn:hover {
+            background: #da190b;
+        }
+
+        #switchCameraBtn {
+            background: #FF9800;
+            color: white;
+        }
+
+        #switchCameraBtn:hover {
+            background: #e68900;
+        }
+
+        .preview-container {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        #photoPreview {
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            display: none;
+        }
+
+        .status {
+            text-align: center;
+            margin-top: 10px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 15px;
+            }
+            
+            button {
+                padding: 10px 20px;
+                font-size: 14px;
+                min-width: 100px;
+            }
+        }
+    </style>
 </head>
 <body>
+    <div class="container">
+        <h1>📸 แอพถ่ายภาพง่ายๆ</h1>
+        
+        <div class="camera-container">
+            <video id="video" autoplay playsinline></video>
+            <canvas id="canvas"></canvas>
+        </div>
 
-  <iframe 
-    src="https://script.google.com/macros/s/AKfycbxmcxlvx0S2Pf-pfAB-KQpgG35f5vreE1B9vsXVwe6ixI0q9hr69Z4qIUCkM5rqKyY/exec" 
-    title="Clinic App"
-    allow="camera; microphone; display-capture; geolocation;" 
-    allowfullscreen>
-  </iframe>
+        <div class="controls">
+            <button id="captureBtn">📷 ถ่ายภาพ</button>
+            <button id="downloadBtn" disabled>💾 บันทึกลงเครื่อง</button>
+            <button id="resetBtn">🔄 ถ่ายใหม่</button>
+            <button id="switchCameraBtn">🔄 สลับกล้อง</button>
+        </div>
 
+        <div class="preview-container">
+            <img id="photoPreview" alt="ตัวอย่างภาพ">
+        </div>
+
+        <div class="status" id="status">
+            กำลังเปิดกล้อง...
+        </div>
+    </div>
+
+    <script>
+        class CameraApp {
+            constructor() {
+                this.video = document.getElementById('video');
+                this.canvas = document.getElementById('canvas');
+                this.photoPreview = document.getElementById('photoPreview');
+                this.status = document.getElementById('status');
+                
+                this.captureBtn = document.getElementById('captureBtn');
+                this.downloadBtn = document.getElementById('downloadBtn');
+                this.resetBtn = document.getElementById('resetBtn');
+                this.switchCameraBtn = document.getElementById('switchCameraBtn');
+                
+                this.currentStream = null;
+                this.currentFacingMode = 'environment'; // เริ่มต้นที่กล้องหลัง
+                this.capturedImage = null;
+                
+                this.init();
+            }
+
+            async init() {
+                try {
+                    await this.startCamera();
+                    this.setupEventListeners();
+                } catch (error) {
+                    this.showStatus('❌ ไม่สามารถเปิดกล้องได้: ' + error.message);
+                    console.error('Error initializing camera:', error);
+                }
+            }
+
+            async startCamera() {
+                try {
+                    // หยุดสตรีมเก่าก่อนถ้ามี
+                    if (this.currentStream) {
+                        this.currentStream.getTracks().forEach(track => track.stop());
+                    }
+
+                    const constraints = {
+                        video: {
+                            facingMode: this.currentFacingMode,
+                            width: { ideal: 1280 },
+                            height: { ideal: 720 }
+                        },
+                        audio: false
+                    };
+
+                    this.showStatus('กำลังขออนุญาตใช้กล้อง...');
+                    
+                    this.currentStream = await navigator.mediaDevices.getUserMedia(constraints);
+                    this.video.srcObject = this.currentStream;
+                    
+                    this.showStatus('✅ กล้องพร้อมใช้งาน');
+                    
+                    // รอให้วิดีโอโหลด
+                    await new Promise((resolve) => {
+                        this.video.onloadedmetadata = () => {
+                            resolve();
+                        };
+                    });
+
+                } catch (error) {
+                    this.showStatus('❌ ไม่สามารถเปิดกล้องได้');
+                    throw error;
+                }
+            }
+
+            setupEventListeners() {
+                this.captureBtn.addEventListener('click', () => this.capturePhoto());
+                this.downloadBtn.addEventListener('click', () => this.downloadPhoto());
+                this.resetBtn.addEventListener('click', () => this.resetCamera());
+                this.switchCameraBtn.addEventListener('click', () => this.switchCamera());
+            }
+
+            capturePhoto() {
+                // ตั้งค่าขนาด canvas ให้เท่ากับวิดีโอ
+                this.canvas.width = this.video.videoWidth;
+                this.canvas.height = this.video.videoHeight;
+                
+                // วาดภาพจากวิดีโอลงบน canvas
+                const context = this.canvas.getContext('2d');
+                context.drawImage(this.video, 0, 0, this.canvas.width, this.canvas.height);
+                
+                // แปลง canvas เป็น data URL
+                this.capturedImage = this.canvas.toDataURL('image/png');
+                
+                // แสดงตัวอย่างภาพ
+                this.photoPreview.src = this.capturedImage;
+                this.photoPreview.style.display = 'block';
+                
+                // ซ่อนวิดีโอและแสดงภาพที่ถ่าย
+                this.video.style.display = 'none';
+                this.canvas.style.display = 'block';
+                
+                // อัปเดตปุ่ม
+                this.captureBtn.disabled = true;
+                this.downloadBtn.disabled = false;
+                
+                this.showStatus('📸 ถ่ายภาพเรียบร้อย!');
+            }
+
+            downloadPhoto() {
+                if (!this.capturedImage) return;
+                
+                // สร้างลิงก์สำหรับดาวน์โหลด
+                const link = document.createElement('a');
+                link.download = `ภาพถ่าย-${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.png`;
+                link.href = this.capturedImage;
+                link.click();
+                
+                this.showStatus('💾 บันทึกภาพเรียบร้อย!');
+            }
+
+            resetCamera() {
+                // แสดงวิดีโอและซ่อน canvas
+                this.video.style.display = 'block';
+                this.canvas.style.display = 'none';
+                this.photoPreview.style.display = 'none';
+                
+                // รีเซ็ตปุ่ม
+                this.captureBtn.disabled = false;
+                this.downloadBtn.disabled = true;
+                
+                this.capturedImage = null;
+                
+                this.showStatus('🔄 พร้อมถ่ายภาพใหม่');
+            }
+
+            async switchCamera() {
+                // สลับระหว่างกล้องหน้าและหลัง
+                this.currentFacingMode = this.currentFacingMode === 'environment' ? 'user' : 'environment';
+                
+                this.showStatus('🔄 กำลังสลับกล้อง...');
+                
+                try {
+                    await this.startCamera();
+                    this.resetCamera();
+                    this.showStatus(`✅ เปลี่ยนเป็นกล้อง${this.currentFacingMode === 'environment' ? 'หลัง' : 'หน้า'}เรียบร้อย`);
+                } catch (error) {
+                    this.showStatus('❌ ไม่สามารถสลับกล้องได้');
+                    console.error('Error switching camera:', error);
+                }
+            }
+
+            showStatus(message) {
+                this.status.textContent = message;
+            }
+        }
+
+        // เริ่มต้นแอพเมื่อโหลดหน้าเว็บเสร็จ
+        document.addEventListener('DOMContentLoaded', () => {
+            // ตรวจสอบว่าเบราว์เซอร์รองรับการเข้าถึงกล้องหรือไม่
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                document.getElementById('status').textContent = '❌ เบราว์เซอร์ของคุณไม่รองรับการเข้าถึงกล้อง';
+                return;
+            }
+            
+            new CameraApp();
+        });
+    </script>
 </body>
 </html>
