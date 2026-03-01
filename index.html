@@ -112,7 +112,9 @@
             margin-bottom: 12px; 
             font-size: 14px;
             background: white;
+            cursor: pointer;
         }
+        select:focus { outline: 2px solid #3b82f6; outline-offset: 2px; }
         .status { 
             text-align: center; 
             margin-top: 16px; 
@@ -258,7 +260,7 @@
                 this.elements.ratioSelect.onchange = (e) => {
                     this.state.aspectRatio = e.target.value;
                     if (this.state.isCropping) {
-                        this.applyRatioToArea();
+                        this.adjustCropAreaToRatio();
                     }
                 };
 
@@ -319,46 +321,73 @@
                 let h = c.height * 0.8;
 
                 if (ratio !== null) {
-                    if (ratio >= 1) {
-                        h = w / ratio;
+                    // ปรับตามอัตราส่วนที่เลือก
+                    const currentRatio = w / h;
+                    if (currentRatio > ratio) {
+                        // กว้างเกินไป -> ปรับความกว้าง
+                        w = h * ratio;
                     } else {
+                        // สูงเกินไป -> ปรับความสูง
+                        h = w / ratio;
+                    }
+                    
+                    // ตรวจสอบไม่ให้เกินขอบเขต
+                    if (w > c.width) {
+                        w = c.width;
+                        h = w / ratio;
+                    }
+                    if (h > c.height) {
+                        h = c.height;
                         w = h * ratio;
                     }
-                    // ปรับให้พอดีขอบถ้าเกิน
-                    if (w > c.width) { w = c.width; h = w / ratio; }
-                    if (h > c.height) { h = c.height; w = h * ratio; }
                 }
 
                 this.state.cropArea = {
                     x: (c.width - w) / 2,
                     y: (c.height - h) / 2,
-                    w, h
+                    w: w,
+                    h: h
                 };
                 this.constrain();
                 this.render();
+                this.updateStatus(`✂️ อัตราส่วน: ${this.elements.ratioSelect.options[this.elements.ratioSelect.selectedIndex].text}`);
             }
 
-            applyRatioToArea() {
-                if (this.state.aspectRatio === 'free') return;
-                const ratio = parseFloat(this.state.aspectRatio);
-                const a = this.state.cropArea;
-
-                const centerX = a.x + a.w / 2;
-                const centerY = a.y + a.h / 2;
-
-                if (ratio >= 1) {
-                    a.w = Math.min(a.w * 1.1, this.elements.editedCanvas.width * 0.9); // ขยายเล็กน้อยเพื่อให้เห็นการเปลี่ยน
-                    a.h = a.w / ratio;
-                } else {
-                    a.h = Math.min(a.h * 1.1, this.elements.editedCanvas.height * 0.9);
-                    a.w = a.h * ratio;
+            adjustCropAreaToRatio() {
+                if (this.state.aspectRatio === 'free') {
+                    this.render();
+                    this.updateStatus('✂️ โหมดอิสระ - ลากปรับได้ตามต้องการ');
+                    return;
                 }
 
-                a.x = centerX - a.w / 2;
-                a.y = centerY - a.h / 2;
-
+                const ratio = parseFloat(this.state.aspectRatio);
+                const a = this.state.cropArea;
+                
+                // คำนวณอัตราส่วนปัจจุบัน
+                const currentRatio = a.w / a.h;
+                
+                // เก็บจุดศูนย์กลางไว้
+                const centerX = a.x + a.w / 2;
+                const centerY = a.y + a.h / 2;
+                
+                // ปรับตามอัตราส่วนใหม่ โดยคงพื้นที่ใกล้เคียงเดิม
+                if (Math.abs(currentRatio - ratio) > 0.01) { // ถ้าต่างกันมากกว่า 1%
+                    if (currentRatio > ratio) {
+                        // กว้างเกินไป -> ปรับความกว้าง
+                        a.w = a.h * ratio;
+                    } else {
+                        // สูงเกินไป -> ปรับความสูง
+                        a.h = a.w / ratio;
+                    }
+                    
+                    // ปรับตำแหน่งให้อยู่กึ่งกลางเท่าเดิม
+                    a.x = centerX - a.w / 2;
+                    a.y = centerY - a.h / 2;
+                }
+                
                 this.constrain();
                 this.render();
+                this.updateStatus(`✂️ อัตราส่วน: ${this.elements.ratioSelect.options[this.elements.ratioSelect.selectedIndex].text}`);
             }
 
             getPos(e) {
@@ -392,60 +421,72 @@
                 const a = this.state.cropArea;
                 const ratio = this.state.aspectRatio === 'free' ? null : parseFloat(this.state.aspectRatio);
 
+                // อัปเดต cursor
                 if (!e.touches) {
                     const handle = this.getHitHandle(pos);
                     let cursor = 'default';
                     if (handle === 'tl' || handle === 'br') cursor = 'nwse-resize';
                     else if (handle === 'tr' || handle === 'bl') cursor = 'nesw-resize';
                     else if (this.isInside(pos)) cursor = 'move';
+                    else cursor = 'crosshair';
                     this.elements.editedCanvas.style.cursor = cursor;
                 }
 
                 if (this.state.isResizing) {
                     const h = this.state.isResizing;
-                    let proposedW = a.w;
-                    let proposedH = a.h;
-                    let proposedX = a.x;
-                    let proposedY = a.y;
-
+                    
+                    // คำนวณตำแหน่งใหม่ตามการลาก
                     switch (h) {
-                        case 'br':
-                            proposedW = Math.max(40, pos.x - a.x);
-                            proposedH = ratio ? proposedW / ratio : Math.max(40, pos.y - a.y);
+                        case 'br': // มุมขวาล่าง
+                            a.w = Math.max(40, pos.x - a.x);
+                            a.h = ratio ? a.w / ratio : Math.max(40, pos.y - a.y);
                             break;
-                        case 'tl':
-                            proposedW = Math.max(40, a.x + a.w - pos.x);
-                            proposedX = pos.x;
-                            if (ratio) {
-                                proposedH = proposedW / ratio;
-                                proposedY = a.y + a.h - proposedH;
-                            } else {
-                                proposedH = Math.max(40, a.y + a.h - pos.y);
-                                proposedY = pos.y;
+                        case 'tl': // มุมซ้ายบน
+                            {
+                                const newW = Math.max(40, a.x + a.w - pos.x);
+                                const newX = pos.x;
+                                if (ratio) {
+                                    a.w = newW;
+                                    a.h = a.w / ratio;
+                                    a.x = newX;
+                                    a.y = a.y + a.h - (a.y + a.h - a.y); // รักษาตำแหน่งล่าง
+                                } else {
+                                    a.w = newW;
+                                    a.h = Math.max(40, a.y + a.h - pos.y);
+                                    a.x = newX;
+                                    a.y = pos.y;
+                                }
                             }
                             break;
-                        case 'tr':
-                            proposedW = Math.max(40, pos.x - a.x);
-                            if (ratio) {
-                                proposedH = proposedW / ratio;
-                                proposedY = a.y + a.h - proposedH;
-                            } else {
-                                proposedH = Math.max(40, a.y + a.h - pos.y);
-                                proposedY = pos.y;
+                        case 'tr': // มุมขวาบน
+                            {
+                                const newW = Math.max(40, pos.x - a.x);
+                                if (ratio) {
+                                    a.w = newW;
+                                    a.h = a.w / ratio;
+                                    a.y = a.y + a.h - (a.y + a.h - a.y);
+                                } else {
+                                    a.w = newW;
+                                    a.h = Math.max(40, a.y + a.h - pos.y);
+                                    a.y = pos.y;
+                                }
                             }
                             break;
-                        case 'bl':
-                            proposedW = Math.max(40, a.x + a.w - pos.x);
-                            proposedX = pos.x;
-                            proposedH = ratio ? proposedW / ratio : Math.max(40, pos.y - a.y);
+                        case 'bl': // มุมซ้ายล่าง
+                            {
+                                const newW = Math.max(40, a.x + a.w - pos.x);
+                                a.x = pos.x;
+                                if (ratio) {
+                                    a.w = newW;
+                                    a.h = a.w / ratio;
+                                } else {
+                                    a.w = newW;
+                                    a.h = Math.max(40, pos.y - a.y);
+                                }
+                            }
                             break;
                     }
-
-                    a.w = proposedW;
-                    a.h = proposedH;
-                    a.x = proposedX;
-                    a.y = proposedY;
-
+                    
                     this.constrain();
                     this.render();
                 } else if (this.state.isDragging) {
@@ -479,8 +520,12 @@
 
             constrain() {
                 const c = this.elements.editedCanvas, a = this.state.cropArea;
-                a.w = Math.min(a.w, c.width);
-                a.h = Math.min(a.h, c.height);
+                
+                // จำกัดขนาดไม่ให้เกินขอบเขต
+                a.w = Math.min(Math.max(40, a.w), c.width);
+                a.h = Math.min(Math.max(40, a.h), c.height);
+                
+                // จำกัดตำแหน่งไม่ให้เกินขอบเขต
                 a.x = Math.max(0, Math.min(a.x, c.width - a.w));
                 a.y = Math.max(0, Math.min(a.y, c.height - a.h));
             }
@@ -488,27 +533,47 @@
             render() {
                 const canvas = this.elements.editedCanvas;
                 const ctx = canvas.getContext('2d');
+                
+                // วาดภาพต้นฉบับ
                 ctx.drawImage(this.bufferCanvas, 0, 0);
 
                 if (!this.state.isCropping) return;
 
                 const { x, y, w, h } = this.state.cropArea;
 
+                // วาดพื้นที่มืดรอบนอก
                 ctx.fillStyle = 'rgba(0,0,0,0.55)';
                 ctx.fillRect(0, 0, canvas.width, y);
                 ctx.fillRect(0, y + h, canvas.width, canvas.height - y - h);
                 ctx.fillRect(0, y, x, h);
                 ctx.fillRect(x + w, y, canvas.width - x - w, h);
 
+                // วาดเส้นขอบสีฟ้า
                 ctx.strokeStyle = '#00d4ff';
                 ctx.lineWidth = 3;
+                ctx.setLineDash([]);
                 ctx.strokeRect(x, y, w, h);
 
+                // แสดงอัตราส่วนที่มุมบนซ้ายของกรอบ
+                if (this.state.aspectRatio !== 'free') {
+                    ctx.fillStyle = 'rgba(0, 212, 255, 0.9)';
+                    ctx.font = 'bold 14px Inter, sans-serif';
+                    ctx.textAlign = 'center';
+                    const ratioText = this.elements.ratioSelect.options[this.elements.ratioSelect.selectedIndex].text;
+                    ctx.fillText(ratioText, x + w/2, y - 8);
+                }
+
+                // วาดจุดจับที่มุม
                 ctx.fillStyle = '#ffffff';
                 ctx.strokeStyle = '#00d4ff';
                 ctx.lineWidth = 2.5;
-                const s = this.state.handleSize;
-                [[x, y], [x+w, y], [x, y+h], [x+w, y+h]].forEach(([px, py]) => {
+                const s = this.state.handleSize / 2;
+                
+                const corners = [
+                    [x, y], [x + w, y], [x, y + h], [x + w, y + h]
+                ];
+                
+                corners.forEach(([px, py]) => {
                     ctx.beginPath();
                     ctx.arc(px, py, s, 0, Math.PI * 2);
                     ctx.fill();
@@ -558,7 +623,9 @@
 
                 this.syncBuffer();
 
-                if (this.state.isCropping) this.resetCropArea();
+                if (this.state.isCropping) {
+                    this.resetCropArea();
+                }
             }
 
             download() {
@@ -566,6 +633,7 @@
                 link.download = `photo-${Date.now()}.png`;
                 link.href = this.elements.editedCanvas.toDataURL('image/png', 0.92);
                 link.click();
+                this.updateStatus('💾 บันทึกภาพเรียบร้อย');
             }
 
             reset() {
