@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Photo Studio Pro - Drag & Crop</title>
+    <title>Photo Studio Pro - Ultimate Crop</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body {
@@ -43,7 +43,6 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            cursor: default;
         }
         #video, #editedCanvas {
             max-width: 100%;
@@ -93,7 +92,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>📸 Photo Studio JS - Pro Crop</h1>
+        <h1>📸 Photo Studio JS - Ultimate Crop</h1>
         <div class="main-content">
             <div class="camera-section">
                 <div class="camera-container" id="camContainer">
@@ -119,7 +118,7 @@
                 </div>
 
                 <div class="tool-group">
-                    <label>Crop Tool (ลากขยับขอบเขตได้)</label>
+                    <label>Crop Tool (ลากขยับ & ดึงมุมได้)</label>
                     <select id="cropAspectRatio" disabled style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #ddd; margin-bottom: 10px;">
                         <option value="free">อิสระ (Free)</option>
                         <option value="1">1:1 (Square)</option>
@@ -145,20 +144,19 @@
                 this.elements = {
                     video: document.getElementById('video'),
                     editedCanvas: document.getElementById('editedCanvas'),
-                    status: document.getElementById('status'),
-                    camContainer: document.getElementById('camContainer')
+                    status: document.getElementById('status')
                 };
                 
                 this.state = {
                     stream: null,
                     facingMode: 'environment',
                     isCropping: false,
-                    isSelecting: false, // โหมดสร้างขอบใหม่
-                    isDragging: false,  // โหมดลากย้ายขอบเดิม
+                    isDragging: false,
+                    isResizing: null, // เก็บว่ากำลังดึงมุมไหน (tl, tr, bl, br)
                     dragOffset: { x: 0, y: 0 },
-                    cropStart: { x: 0, y: 0 },
-                    cropEnd: { x: 0, y: 0 },
-                    aspectRatio: 'free'
+                    cropArea: { x: 0, y: 0, w: 0, h: 0 },
+                    aspectRatio: 'free',
+                    handleSize: 12 // ขนาดของจุดที่มุมสำหรับการดึง
                 };
 
                 this.bufferCanvas = document.createElement('canvas');
@@ -180,9 +178,7 @@
                     });
                     this.elements.video.srcObject = this.state.stream;
                     this.updateStatus('✅ กล้องพร้อม');
-                } catch (e) {
-                    this.updateStatus('❌ เข้าถึงกล้องไม่ได้');
-                }
+                } catch (e) { this.updateStatus('❌ เข้าถึงกล้องไม่ได้'); }
             }
 
             bindEvents() {
@@ -218,35 +214,11 @@
                 editedCanvas.height = video.videoHeight;
                 this.bufferCanvas.width = video.videoWidth;
                 this.bufferCanvas.height = video.videoHeight;
-
                 editedCanvas.getContext('2d').drawImage(video, 0, 0);
                 this.syncBuffer();
-
                 video.style.display = 'none';
                 editedCanvas.style.display = 'block';
                 this.setUIState(true);
-            }
-
-            transform(deg, sx, sy) {
-                const canvas = this.elements.editedCanvas;
-                const temp = document.createElement('canvas');
-                const tCtx = temp.getContext('2d');
-                
-                if (Math.abs(deg) === 90) {
-                    temp.width = canvas.height; temp.height = canvas.width;
-                } else {
-                    temp.width = canvas.width; temp.height = canvas.height;
-                }
-
-                tCtx.translate(temp.width/2, temp.height/2);
-                tCtx.rotate(deg * Math.PI / 180);
-                tCtx.scale(sx, sy);
-                tCtx.drawImage(canvas, -canvas.width/2, -canvas.height/2);
-
-                canvas.width = temp.width;
-                canvas.height = temp.height;
-                canvas.getContext('2d').drawImage(temp, 0, 0);
-                this.syncBuffer();
             }
 
             syncBuffer() {
@@ -263,16 +235,13 @@
                 document.getElementById('cancelCropBtn').style.display = display;
                 document.getElementById('resetCropBtn').style.display = display;
                 this.state.aspectRatio = document.getElementById('cropAspectRatio').value;
-                
                 if (active) this.resetCropArea();
                 else this.render();
             }
 
             resetCropArea() {
                 const c = this.elements.editedCanvas;
-                // ตั้งค่าขอบเขตเริ่มต้นเป็น 80% ของรูป
-                this.state.cropStart = { x: c.width * 0.1, y: c.height * 0.1 };
-                this.state.cropEnd = { x: c.width * 0.9, y: c.height * 0.9 };
+                this.state.cropArea = { x: c.width*0.1, y: c.height*0.1, w: c.width*0.8, h: c.height*0.8 };
                 this.render();
             }
 
@@ -289,113 +258,122 @@
             handleStart(e) {
                 if (!this.state.isCropping) return;
                 const pos = this.getPos(e);
-                
-                if (this.isInside(pos)) {
+                const handle = this.getHitHandle(pos);
+
+                if (handle) {
+                    this.state.isResizing = handle;
+                } else if (this.isInside(pos)) {
                     this.state.isDragging = true;
-                    this.state.dragOffset = { x: pos.x - this.state.cropStart.x, y: pos.y - this.state.cropStart.y };
-                } else {
-                    this.state.isSelecting = true;
-                    this.state.cropStart = pos;
-                    this.state.cropEnd = pos;
+                    this.state.dragOffset = { x: pos.x - this.state.cropArea.x, y: pos.y - this.state.cropArea.y };
                 }
             }
 
             handleMove(e) {
                 if (!this.state.isCropping) return;
                 const pos = this.getPos(e);
+                const area = this.state.cropArea;
 
-                // เปลี่ยน Cursor ให้ผู้ใช้รู้ว่าลากได้
-                this.elements.editedCanvas.style.cursor = this.isInside(pos) ? 'move' : 'crosshair';
+                // อัปเดต Cursor
+                const handle = this.getHitHandle(pos);
+                if (handle === 'tl' || handle === 'br') this.elements.editedCanvas.style.cursor = 'nwse-resize';
+                else if (handle === 'tr' || handle === 'bl') this.elements.editedCanvas.style.cursor = 'nesw-resize';
+                else if (this.isInside(pos)) this.elements.editedCanvas.style.cursor = 'move';
+                else this.elements.editedCanvas.style.cursor = 'default';
 
-                if (this.state.isSelecting) {
-                    this.state.cropEnd = pos;
+                if (this.state.isResizing) {
+                    const h = this.state.isResizing;
+                    const prevX = area.x, prevY = area.y;
+                    
+                    if (h === 'tl') {
+                        area.w += area.x - pos.x; area.h += area.y - pos.y;
+                        area.x = pos.x; area.y = pos.y;
+                    } else if (h === 'tr') {
+                        area.w = pos.x - area.x; area.h += area.y - pos.y;
+                        area.y = pos.y;
+                    } else if (h === 'bl') {
+                        area.w += area.x - pos.x; area.x = pos.x;
+                        area.h = pos.y - area.y;
+                    } else if (h === 'br') {
+                        area.w = pos.x - area.x; area.h = pos.y - area.y;
+                    }
+
+                    // ป้องกันความกว้าง/สูงติดลบ
+                    if (area.w < 20) area.w = 20;
+                    if (area.h < 20) area.h = 20;
                     this.render();
                 } else if (this.state.isDragging) {
-                    const w = this.state.cropEnd.x - this.state.cropStart.x;
-                    const h = this.state.cropEnd.y - this.state.cropStart.y;
-                    this.state.cropStart.x = pos.x - this.state.dragOffset.x;
-                    this.state.cropStart.y = pos.y - this.state.dragOffset.y;
-                    this.state.cropEnd.x = this.state.cropStart.x + w;
-                    this.state.cropEnd.y = this.state.cropStart.y + h;
+                    area.x = pos.x - this.state.dragOffset.x;
+                    area.y = pos.y - this.state.dragOffset.y;
                     this.constrain();
                     this.render();
                 }
             }
 
-            handleEnd() {
-                this.state.isSelecting = false;
-                this.state.isDragging = false;
+            handleEnd() { this.state.isDragging = false; this.state.isResizing = null; }
+
+            getHitHandle(pos) {
+                const { x, y, w, h } = this.state.cropArea;
+                const s = this.state.handleSize;
+                if (Math.abs(pos.x - x) < s && Math.abs(pos.y - y) < s) return 'tl';
+                if (Math.abs(pos.x - (x+w)) < s && Math.abs(pos.y - y) < s) return 'tr';
+                if (Math.abs(pos.x - x) < s && Math.abs(pos.y - (y+h)) < s) return 'bl';
+                if (Math.abs(pos.x - (x+w)) < s && Math.abs(pos.y - (y+h)) < s) return 'br';
+                return null;
             }
 
             isInside(pos) {
-                const x = Math.min(this.state.cropStart.x, this.state.cropEnd.x);
-                const y = Math.min(this.state.cropStart.y, this.state.cropEnd.y);
-                const w = Math.abs(this.state.cropEnd.x - this.state.cropStart.x);
-                const h = Math.abs(this.state.cropEnd.y - this.state.cropStart.y);
-                return pos.x > x && pos.x < x+w && pos.y > y && pos.y < y+h;
+                const a = this.state.cropArea;
+                return pos.x > a.x && pos.x < a.x+a.w && pos.y > a.y && pos.y < a.y+a.h;
             }
 
             constrain() {
-                const c = this.elements.editedCanvas;
-                const w = this.state.cropEnd.x - this.state.cropStart.x;
-                const h = this.state.cropEnd.y - this.state.cropStart.y;
-                if (this.state.cropStart.x < 0) { this.state.cropStart.x = 0; this.state.cropEnd.x = w; }
-                if (this.state.cropStart.y < 0) { this.state.cropStart.y = 0; this.state.cropEnd.y = h; }
-                if (this.state.cropEnd.x > c.width) { this.state.cropEnd.x = c.width; this.state.cropStart.x = c.width - w; }
-                if (this.state.cropEnd.y > c.height) { this.state.cropEnd.y = c.height; this.state.cropStart.y = c.height - h; }
+                const c = this.elements.editedCanvas, a = this.state.cropArea;
+                if (a.x < 0) a.x = 0; if (a.y < 0) a.y = 0;
+                if (a.x + a.w > c.width) a.x = c.width - a.w;
+                if (a.y + a.h > c.height) a.y = c.height - a.h;
             }
 
             render() {
-                const canvas = this.elements.editedCanvas;
-                const ctx = canvas.getContext('2d');
+                const canvas = this.elements.editedCanvas, ctx = canvas.getContext('2d');
                 ctx.drawImage(this.bufferCanvas, 0, 0);
-
                 if (!this.state.isCropping) return;
 
-                let x = Math.min(this.state.cropStart.x, this.state.cropEnd.x);
-                let y = Math.min(this.state.cropStart.y, this.state.cropEnd.y);
-                let w = Math.abs(this.state.cropEnd.x - this.state.cropStart.x);
-                let h = Math.abs(this.state.cropEnd.y - this.state.cropStart.y);
-
-                if (this.state.aspectRatio !== 'free') h = w / parseFloat(this.state.aspectRatio);
-
-                // Overlay
+                const { x, y, w, h } = this.state.cropArea;
+                // Overlay มืด
                 ctx.fillStyle = 'rgba(0,0,0,0.6)';
-                ctx.fillRect(0, 0, canvas.width, y);
-                ctx.fillRect(0, y + h, canvas.width, canvas.height - (y + h));
-                ctx.fillRect(0, y, x, h);
-                ctx.fillRect(x + w, y, canvas.width - (x + w), h);
+                ctx.fillRect(0, 0, canvas.width, y); ctx.fillRect(0, y+h, canvas.width, canvas.height-(y+h));
+                ctx.fillRect(0, y, x, h); ctx.fillRect(x+w, y, canvas.width-(x+w), h);
 
-                // Stroke
-                ctx.strokeStyle = '#3b82f6';
-                ctx.lineWidth = 3;
-                ctx.strokeRect(x, y, w, h);
+                // กรอบสีฟ้า
+                ctx.strokeStyle = '#3b82f6'; ctx.lineWidth = 2; ctx.strokeRect(x, y, w, h);
                 
-                // Corners
-                ctx.fillStyle = '#3b82f6';
-                const s = 10;
-                ctx.fillRect(x-s, y-s, s*2, s*2); ctx.fillRect(x+w-s, y-s, s*2, s*2);
-                ctx.fillRect(x-s, y+h-s, s*2, s*2); ctx.fillRect(x+w-s, y+h-s, s*2, s*2);
+                // จุดดึงมุมทั้ง 4 (Handles)
+                ctx.fillStyle = '#ffffff'; ctx.strokeStyle = '#3b82f6'; ctx.lineWidth = 2;
+                const s = this.state.handleSize;
+                [ [x, y], [x+w, y], [x, y+h], [x+w, y+h] ].forEach(p => {
+                    ctx.beginPath(); ctx.arc(p[0], p[1], s/1.5, 0, Math.PI*2);
+                    ctx.fill(); ctx.stroke();
+                });
             }
 
             executeCrop() {
-                const canvas = this.elements.editedCanvas;
-                const x = Math.min(this.state.cropStart.x, this.state.cropEnd.x);
-                const y = Math.min(this.state.cropStart.y, this.state.cropEnd.y);
-                let w = Math.abs(this.state.cropEnd.x - this.state.cropStart.x);
-                let h = Math.abs(this.state.cropEnd.y - this.state.cropStart.y);
-                if (this.state.aspectRatio !== 'free') h = w / parseFloat(this.state.aspectRatio);
-
-                if (w < 10) return;
-
+                const canvas = this.elements.editedCanvas, a = this.state.cropArea;
                 const temp = document.createElement('canvas');
-                temp.width = w; temp.height = h;
-                temp.getContext('2d').drawImage(this.bufferCanvas, x, y, w, h, 0, 0, w, h);
-
-                canvas.width = w; canvas.height = h;
+                temp.width = a.w; temp.height = a.h;
+                temp.getContext('2d').drawImage(this.bufferCanvas, a.x, a.y, a.w, a.h, 0, 0, a.w, a.h);
+                canvas.width = a.w; canvas.height = a.h;
                 canvas.getContext('2d').drawImage(temp, 0, 0);
-                this.syncBuffer();
-                this.toggleCropMode(false);
+                this.syncBuffer(); this.toggleCropMode(false);
+            }
+
+            transform(deg, sx, sy) {
+                const canvas = this.elements.editedCanvas, temp = document.createElement('canvas'), tCtx = temp.getContext('2d');
+                if (Math.abs(deg) === 90) { temp.width = canvas.height; temp.height = canvas.width; }
+                else { temp.width = canvas.width; temp.height = canvas.height; }
+                tCtx.translate(temp.width/2, temp.height/2); tCtx.rotate(deg * Math.PI / 180); tCtx.scale(sx, sy);
+                tCtx.drawImage(canvas, -canvas.width/2, -canvas.height/2);
+                canvas.width = temp.width; canvas.height = temp.height;
+                canvas.getContext('2d').drawImage(temp, 0, 0); this.syncBuffer();
             }
 
             download() {
