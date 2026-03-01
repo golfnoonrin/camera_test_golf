@@ -7,13 +7,14 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body {
-            font-family: 'Inter', -apple-system, sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             background: #0f172a;
             min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
             padding: 15px;
+            color: #1e293b;
         }
         .container {
             background: #ffffff;
@@ -23,13 +24,18 @@
             max-width: 1100px;
             width: 100%;
         }
-        h1 { text-align: center; color: #1e293b; margin-bottom: 20px; font-size: 22px; }
+        h1 { 
+            text-align: center; 
+            color: #1e293b; 
+            margin-bottom: 24px; 
+            font-size: 24px; 
+        }
         .main-content { display: flex; gap: 20px; }
         .camera-section { flex: 1.5; position: relative; }
-        .editor-section { 
-            flex: 1; 
-            background: #f8fafc; 
-            border-radius: 16px; 
+        .editor-section {
+            flex: 1;
+            background: #f8fafc;
+            border-radius: 16px;
             padding: 20px;
             border: 1px solid #e2e8f0;
         }
@@ -51,13 +57,13 @@
             object-fit: contain;
         }
         .controls {
-            margin-top: 15px;
+            margin-top: 16px;
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
             gap: 10px;
         }
         button {
-            padding: 12px;
+            padding: 12px 16px;
             border: none;
             border-radius: 10px;
             cursor: pointer;
@@ -65,37 +71,64 @@
             transition: all 0.2s;
             font-size: 14px;
         }
-        button:active { transform: scale(0.95); }
-        button:disabled { opacity: 0.3; cursor: not-allowed; }
-
+        button:active { transform: scale(0.96); }
+        button:disabled { opacity: 0.4; cursor: not-allowed; }
         #captureBtn { background: #10b981; color: white; }
         #downloadBtn { background: #3b82f6; color: white; }
         #resetBtn { background: #ef4444; color: white; }
         #switchCameraBtn { background: #6366f1; color: white; }
-
         .tool-group {
-            margin-bottom: 15px;
-            padding: 12px;
+            margin-bottom: 16px;
+            padding: 14px;
             background: white;
             border-radius: 12px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
         }
-        .tool-group label { display: block; font-size: 11px; font-weight: 700; color: #64748b; margin-bottom: 8px; text-transform: uppercase; }
-        .tool-buttons { display: flex; gap: 6px; flex-wrap: wrap; }
-        .tool-btn { flex: 1; padding: 8px; background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 13px; }
-        
-        select { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 10px; outline: none; }
-
-        .status { text-align: center; margin-top: 15px; color: #64748b; font-size: 14px; }
-
+        .tool-group label { 
+            display: block; 
+            font-size: 11px; 
+            font-weight: 700; 
+            color: #64748b; 
+            margin-bottom: 8px; 
+            text-transform: uppercase; 
+            letter-spacing: 0.5px;
+        }
+        .tool-buttons { display: flex; gap: 8px; flex-wrap: wrap; }
+        .tool-btn { 
+            flex: 1; 
+            padding: 9px; 
+            background: #f1f5f9; 
+            border: 1px solid #e2e8f0; 
+            border-radius: 8px; 
+            font-size: 13px; 
+            cursor: pointer;
+        }
+        .tool-btn:active { background: #e2e8f0; }
+        select { 
+            width: 100%; 
+            padding: 10px; 
+            border-radius: 8px; 
+            border: 1px solid #e2e8f0; 
+            margin-bottom: 12px; 
+            font-size: 14px;
+            background: white;
+        }
+        .status { 
+            text-align: center; 
+            margin-top: 16px; 
+            color: #64748b; 
+            font-size: 14px; 
+            font-weight: 500;
+        }
         @media (max-width: 850px) {
             .main-content { flex-direction: column; }
+            .camera-section { flex: none; }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>📸 Photo Studio JS - Ultimate Edition</h1>
+        <h1>📸 Photo Studio Pro - Ultimate</h1>
         <div class="main-content">
             <div class="camera-section">
                 <div class="camera-container" id="camContainer">
@@ -109,34 +142,33 @@
                     <button id="downloadBtn" disabled>💾 บันทึก</button>
                 </div>
             </div>
-
             <div class="editor-section">
                 <div class="tool-group">
-                    <label>Rotate & Flip</label>
+                    <label>หมุน & พลิกภาพ</label>
                     <div class="tool-buttons">
-                        <button class="tool-btn" id="rotateLeftBtn" disabled>↪️ -90</button>
-                        <button class="tool-btn" id="rotateRightBtn" disabled>↩️ +90</button>
-                        <button class="tool-btn" id="flipHorizontalBtn" disabled>↔️ พลิก</button>
+                        <button class="tool-btn" id="rotateLeftBtn" disabled>↪️ -90°</button>
+                        <button class="tool-btn" id="rotateRightBtn" disabled>↩️ +90°</button>
+                        <button class="tool-btn" id="flipHorizontalBtn" disabled>↔️ พลิกซ้าย-ขวา</button>
                     </div>
                 </div>
-
                 <div class="tool-group">
-                    <label>Crop Settings</label>
+                    <label>การครอบตัด (Crop)</label>
                     <select id="cropAspectRatio" disabled>
                         <option value="free">อิสระ (Free)</option>
-                        <option value="1">1:1 (Square)</option>
-                        <option value="1.33333333333">4:3 (Standard)</option>
-                        <option value="1.77777777778">16:9 (Widescreen)</option>
-                        <option value="0.75">3:4 (Portrait)</option>
+                        <option value="1">1:1 (สี่เหลี่ยมจัตุรัส)</option>
+                        <option value="1.333333">4:3 (มาตรฐาน)</option>
+                        <option value="1.777778">16:9 (วิดีโอแนวนอน)</option>
+                        <option value="0.5625">9:16 (แนวตั้ง Stories)</option>
+                        <option value="0.75">3:4 (แนวตั้ง)</option>
                     </select>
                     <div class="tool-buttons">
-                        <button class="tool-btn" id="startCropBtn" disabled>✂️ เริ่ม Crop</button>
-                        <button class="tool-btn" id="applyCropBtn" style="display:none; background: #10b981; color: white;">ยืนยัน</button>
-                        <button class="tool-btn" id="resetCropBtn" style="display:none; background: #64748b; color: white;">Reset ขอบ</button>
-                        <button class="tool-btn" id="cancelCropBtn" style="display:none; background: #ef4444; color: white;">ยกเลิก</button>
+                        <button class="tool-btn" id="startCropBtn" disabled>✂️ เริ่มครอบตัด</button>
+                        <button class="tool-btn" id="applyCropBtn" style="display:none; background:#10b981; color:white;">ยืนยันครอบตัด</button>
+                        <button class="tool-btn" id="resetCropBtn" style="display:none; background:#64748b; color:white;">รีเซ็ตกรอบ</button>
+                        <button class="tool-btn" id="cancelCropBtn" style="display:none; background:#ef4444; color:white;">ยกเลิก</button>
                     </div>
                 </div>
-                <div class="status" id="status">กำลังเริ่มต้น...</div>
+                <div class="status" id="status">กำลังเริ่มต้นกล้อง...</div>
             </div>
         </div>
     </div>
@@ -150,7 +182,7 @@
                     status: document.getElementById('status'),
                     ratioSelect: document.getElementById('cropAspectRatio')
                 };
-                
+
                 this.state = {
                     stream: null,
                     facingMode: 'environment',
@@ -160,11 +192,11 @@
                     dragOffset: { x: 0, y: 0 },
                     cropArea: { x: 0, y: 0, w: 0, h: 0 },
                     aspectRatio: 'free',
-                    handleSize: 14 
+                    handleSize: 16
                 };
 
                 this.bufferCanvas = document.createElement('canvas');
-                this.bufferCtx = this.bufferCanvas.getContext('2d');
+                this.bufferCtx = this.bufferCanvas.getContext('2d', { alpha: false });
 
                 this.init();
             }
@@ -176,27 +208,47 @@
 
             async startCamera() {
                 try {
-                    if (this.state.stream) this.state.stream.getTracks().forEach(t => t.stop());
-                    this.state.stream = await navigator.mediaDevices.getUserMedia({
-                        video: { facingMode: this.state.facingMode, width: { ideal: 1920 }, height: { ideal: 1080 } }
-                    });
+                    if (this.state.stream) {
+                        this.state.stream.getTracks().forEach(t => t.stop());
+                        this.state.stream = null;
+                    }
+
+                    const constraints = {
+                        video: {
+                            facingMode: this.state.facingMode,
+                            width: { ideal: 1280 },
+                            height: { ideal: 720 },
+                            frameRate: { ideal: 30 }
+                        }
+                    };
+
+                    this.state.stream = await navigator.mediaDevices.getUserMedia(constraints);
                     this.elements.video.srcObject = this.state.stream;
-                    this.updateStatus('✅ กล้องพร้อม');
-                } catch (e) { this.updateStatus('❌ เข้าถึงกล้องไม่ได้'); }
+                    await this.elements.video.play();
+                    this.updateStatus('✅ กล้องพร้อมใช้งานแล้ว');
+                } catch (e) {
+                    console.error(e);
+                    let msg = '❌ ไม่สามารถเปิดกล้องได้';
+                    if (e.name === 'NotAllowedError') msg += ' – กรุณาอนุญาตการใช้งานกล้อง';
+                    if (e.name === 'NotFoundError') msg += ' – ไม่พบกล้องในอุปกรณ์นี้';
+                    this.updateStatus(msg);
+                }
             }
 
             bindEvents() {
+                const prevent = e => e.preventDefault();
+
                 document.getElementById('captureBtn').onclick = () => this.capture();
                 document.getElementById('resetBtn').onclick = () => this.reset();
                 document.getElementById('switchCameraBtn').onclick = () => {
                     this.state.facingMode = this.state.facingMode === 'user' ? 'environment' : 'user';
                     this.startCamera();
                 };
-                
+
                 document.getElementById('rotateLeftBtn').onclick = () => this.transform(-90, 1, 1);
                 document.getElementById('rotateRightBtn').onclick = () => this.transform(90, 1, 1);
                 document.getElementById('flipHorizontalBtn').onclick = () => this.transform(0, -1, 1);
-                
+
                 document.getElementById('startCropBtn').onclick = () => this.toggleCropMode(true);
                 document.getElementById('cancelCropBtn').onclick = () => this.toggleCropMode(false);
                 document.getElementById('applyCropBtn').onclick = () => this.executeCrop();
@@ -207,51 +259,73 @@
                     this.state.aspectRatio = e.target.value;
                     if (this.state.isCropping) this.applyRatioToArea();
                 };
-                
+
                 const ec = this.elements.editedCanvas;
-                ec.onmousedown = (e) => this.handleStart(e);
-                ec.ontouchstart = (e) => this.handleStart(e);
-                window.onmousemove = (e) => this.handleMove(e);
-                window.ontouchmove = (e) => this.handleMove(e);
+                ec.onmousedown = e => { prevent(e); this.handleStart(e); };
+                ec.ontouchstart = e => { prevent(e); this.handleStart(e); };
+
+                window.onmousemove = e => this.handleMove(e);
+                window.ontouchmove = e => this.handleMove(e);
                 window.onmouseup = () => this.handleEnd();
-                window.ontouchend = () => this.handleEnd();
+                window.ontouchend = e => { prevent(e); this.handleEnd(); };
             }
 
             capture() {
                 const { video, editedCanvas } = this.elements;
                 editedCanvas.width = video.videoWidth;
                 editedCanvas.height = video.videoHeight;
-                this.bufferCanvas.width = video.videoWidth;
-                this.bufferCanvas.height = video.videoHeight;
-                editedCanvas.getContext('2d').drawImage(video, 0, 0);
+
+                const ctx = editedCanvas.getContext('2d');
+                ctx.drawImage(video, 0, 0);
+
                 this.syncBuffer();
                 video.style.display = 'none';
                 editedCanvas.style.display = 'block';
                 this.setUIState(true);
+                this.updateStatus('📸 ถ่ายภาพเรียบร้อย – พร้อมแก้ไข');
             }
 
             syncBuffer() {
-                this.bufferCanvas.width = this.elements.editedCanvas.width;
-                this.bufferCanvas.height = this.elements.editedCanvas.height;
-                this.bufferCtx.drawImage(this.elements.editedCanvas, 0, 0);
+                const cw = this.elements.editedCanvas.width;
+                const ch = this.elements.editedCanvas.height;
+                this.bufferCanvas.width = cw;
+                this.bufferCanvas.height = ch;
+                this.bufferCtx.drawImage(this.elements.editedCanvas, 0, 0, cw, ch);
             }
 
             toggleCropMode(active) {
                 this.state.isCropping = active;
                 const display = active ? 'inline-block' : 'none';
+
                 document.getElementById('startCropBtn').style.display = active ? 'none' : 'inline-block';
-                document.getElementById('applyCropBtn').style.display = display;
-                document.getElementById('cancelCropBtn').style.display = display;
-                document.getElementById('resetCropBtn').style.display = display;
-                this.state.aspectRatio = this.elements.ratioSelect.value;
-                if (active) this.resetCropArea();
-                else this.render();
+                ['applyCropBtn', 'cancelCropBtn', 'resetCropBtn'].forEach(id => {
+                    document.getElementById(id).style.display = display;
+                });
+
+                if (active) {
+                    this.resetCropArea();
+                } else {
+                    this.render();
+                }
             }
 
             resetCropArea() {
                 const c = this.elements.editedCanvas;
-                this.state.cropArea = { x: c.width*0.1, y: c.height*0.1, w: c.width*0.8, h: c.height*0.8 };
-                this.applyRatioToArea();
+                let w = c.width * 0.8;
+                let h = c.height * 0.8;
+                const ratio = this.state.aspectRatio === 'free' ? null : parseFloat(this.state.aspectRatio);
+
+                if (ratio) {
+                    if (ratio >= 1) h = w / ratio;
+                    else w = h * ratio;
+                }
+
+                this.state.cropArea = {
+                    x: (c.width - w) / 2,
+                    y: (c.height - h) / 2,
+                    w, h
+                };
+                this.constrain();
                 this.render();
             }
 
@@ -266,11 +340,10 @@
 
             getPos(e) {
                 const rect = this.elements.editedCanvas.getBoundingClientRect();
-                const clientX = (e.touches && e.touches.length > 0) ? e.touches[0].clientX : e.clientX;
-                const clientY = (e.touches && e.touches.length > 0) ? e.touches[0].clientY : e.clientY;
+                const touch = e.touches?.[0] ?? e;
                 return {
-                    x: (clientX - rect.left) * (this.elements.editedCanvas.width / rect.width),
-                    y: (clientY - rect.top) * (this.elements.editedCanvas.height / rect.height)
+                    x: (touch.clientX - rect.left) * (this.elements.editedCanvas.width / rect.width),
+                    y: (touch.clientY - rect.top) * (this.elements.editedCanvas.height / rect.height)
                 };
             }
 
@@ -278,11 +351,15 @@
                 if (!this.state.isCropping) return;
                 const pos = this.getPos(e);
                 const handle = this.getHitHandle(pos);
+
                 if (handle) {
                     this.state.isResizing = handle;
                 } else if (this.isInside(pos)) {
                     this.state.isDragging = true;
-                    this.state.dragOffset = { x: pos.x - this.state.cropArea.x, y: pos.y - this.state.cropArea.y };
+                    this.state.dragOffset = {
+                        x: pos.x - this.state.cropArea.x,
+                        y: pos.y - this.state.cropArea.y
+                    };
                 }
             }
 
@@ -292,33 +369,57 @@
                 const a = this.state.cropArea;
                 const ratio = this.state.aspectRatio === 'free' ? null : parseFloat(this.state.aspectRatio);
 
-                // Cursor Update
-                const handle = this.getHitHandle(pos);
-                if (handle === 'tl' || handle === 'br') this.elements.editedCanvas.style.cursor = 'nwse-resize';
-                else if (handle === 'tr' || handle === 'bl') this.elements.editedCanvas.style.cursor = 'nesw-resize';
-                else if (this.isInside(pos)) this.elements.editedCanvas.style.cursor = 'move';
-                else this.elements.editedCanvas.style.cursor = 'default';
+                if (!e.touches) {
+                    const handle = this.getHitHandle(pos);
+                    let cursor = 'default';
+                    if (handle === 'tl' || handle === 'br') cursor = 'nwse-resize';
+                    else if (handle === 'tr' || handle === 'bl') cursor = 'nesw-resize';
+                    else if (this.isInside(pos)) cursor = 'move';
+                    this.elements.editedCanvas.style.cursor = cursor;
+                }
 
                 if (this.state.isResizing) {
                     const h = this.state.isResizing;
-                    if (h === 'br') {
-                        a.w = pos.x - a.x;
-                        a.h = ratio ? a.w / ratio : pos.y - a.y;
-                    } else if (h === 'tl') {
-                        const dw = a.x - pos.x;
-                        a.w += dw; a.x = pos.x;
-                        a.h = ratio ? a.w / ratio : a.h + (a.y - pos.y);
-                        if (ratio) a.y -= (a.w / ratio) - (a.w - dw) / ratio; // Keep proportional
-                        else a.y = pos.y;
-                    } else if (h === 'tr') {
-                        a.w = pos.x - a.x;
-                        a.h = ratio ? a.w / ratio : a.h + (a.y - pos.y);
-                        if (!ratio) a.y = pos.y;
-                    } else if (h === 'bl') {
-                        a.w += a.x - pos.x; a.x = pos.x;
-                        a.h = ratio ? a.w / ratio : pos.y - a.y;
+
+                    switch (h) {
+                        case 'br':
+                            a.w = Math.max(40, pos.x - a.x);
+                            a.h = ratio ? a.w / ratio : Math.max(40, pos.y - a.y);
+                            break;
+                        case 'tl':
+                            const dw = a.x - pos.x;
+                            a.w = Math.max(40, a.w + dw);
+                            a.x = pos.x;
+                            if (ratio) {
+                                const newH = a.w / ratio;
+                                a.y -= (newH - a.h);
+                                a.h = newH;
+                            } else {
+                                const dh = a.y - pos.y;
+                                a.h = Math.max(40, a.h + dh);
+                                a.y = pos.y;
+                            }
+                            break;
+                        case 'tr':
+                            a.w = Math.max(40, pos.x - a.x);
+                            if (ratio) {
+                                const newH = a.w / ratio;
+                                a.y += (a.h - newH);
+                                a.h = newH;
+                            } else {
+                                const dh = a.y - pos.y;
+                                a.h = Math.max(40, a.h + dh);
+                                a.y = pos.y;
+                            }
+                            break;
+                        case 'bl':
+                            const dw2 = a.x - pos.x;
+                            a.w = Math.max(40, a.w + dw2);
+                            a.x = pos.x;
+                            a.h = ratio ? a.w / ratio : Math.max(40, pos.y - a.y);
+                            break;
                     }
-                    if (a.w < 30) a.w = 30; if (a.h < 30) a.h = 30;
+
                     this.constrain();
                     this.render();
                 } else if (this.state.isDragging) {
@@ -329,76 +430,115 @@
                 }
             }
 
-            handleEnd() { this.state.isDragging = false; this.state.isResizing = null; }
+            handleEnd() {
+                this.state.isDragging = false;
+                this.state.isResizing = null;
+            }
 
             getHitHandle(pos) {
                 const { x, y, w, h } = this.state.cropArea;
-                const s = this.state.handleSize * 1.5; // Area hit
-                if (Math.abs(pos.x - x) < s && Math.abs(pos.y - y) < s) return 'tl';
-                if (Math.abs(pos.x - (x+w)) < s && Math.abs(pos.y - y) < s) return 'tr';
-                if (Math.abs(pos.x - x) < s && Math.abs(pos.y - (y+h)) < s) return 'bl';
-                if (Math.abs(pos.x - (x+w)) < s && Math.abs(pos.y - (y+h)) < s) return 'br';
+                const s = this.state.handleSize * 1.8;
+
+                if (Math.hypot(pos.x - x, pos.y - y) < s) return 'tl';
+                if (Math.hypot(pos.x - (x + w), pos.y - y) < s) return 'tr';
+                if (Math.hypot(pos.x - x, pos.y - (y + h)) < s) return 'bl';
+                if (Math.hypot(pos.x - (x + w), pos.y - (y + h)) < s) return 'br';
                 return null;
             }
 
             isInside(pos) {
                 const a = this.state.cropArea;
-                return pos.x > a.x && pos.x < a.x+a.w && pos.y > a.y && pos.y < a.y+a.h;
+                return pos.x >= a.x && pos.x <= a.x + a.w && pos.y >= a.y && pos.y <= a.y + a.h;
             }
 
             constrain() {
                 const c = this.elements.editedCanvas, a = this.state.cropArea;
-                if (a.w > c.width) a.w = c.width; if (a.h > c.height) a.h = c.height;
-                if (a.x < 0) a.x = 0; if (a.y < 0) a.y = 0;
-                if (a.x + a.w > c.width) a.x = c.width - a.w;
-                if (a.y + a.h > c.height) a.y = c.height - a.h;
+                a.w = Math.min(a.w, c.width);
+                a.h = Math.min(a.h, c.height);
+                a.x = Math.max(0, Math.min(a.x, c.width - a.w));
+                a.y = Math.max(0, Math.min(a.y, c.height - a.h));
             }
 
             render() {
-                const canvas = this.elements.editedCanvas, ctx = canvas.getContext('2d');
+                const canvas = this.elements.editedCanvas;
+                const ctx = canvas.getContext('2d');
                 ctx.drawImage(this.bufferCanvas, 0, 0);
+
                 if (!this.state.isCropping) return;
 
                 const { x, y, w, h } = this.state.cropArea;
-                ctx.fillStyle = 'rgba(0,0,0,0.6)';
-                ctx.fillRect(0, 0, canvas.width, y); ctx.fillRect(0, y+h, canvas.width, canvas.height-(y+h));
-                ctx.fillRect(0, y, x, h); ctx.fillRect(x+w, y, canvas.width-(x+w), h);
 
-                ctx.strokeStyle = '#3b82f6'; ctx.lineWidth = 2; ctx.strokeRect(x, y, w, h);
-                
-                ctx.fillStyle = '#ffffff'; ctx.strokeStyle = '#3b82f6'; ctx.lineWidth = 2;
+                ctx.fillStyle = 'rgba(0,0,0,0.55)';
+                ctx.fillRect(0, 0, canvas.width, y);
+                ctx.fillRect(0, y + h, canvas.width, canvas.height - y - h);
+                ctx.fillRect(0, y, x, h);
+                ctx.fillRect(x + w, y, canvas.width - x - w, h);
+
+                ctx.strokeStyle = '#00d4ff';
+                ctx.lineWidth = 3;
+                ctx.strokeRect(x, y, w, h);
+
+                ctx.fillStyle = '#ffffff';
+                ctx.strokeStyle = '#00d4ff';
+                ctx.lineWidth = 2.5;
                 const s = this.state.handleSize;
-                [ [x, y], [x+w, y], [x, y+h], [x+w, y+h] ].forEach(p => {
-                    ctx.beginPath(); ctx.arc(p[0], p[1], s/2, 0, Math.PI*2);
-                    ctx.fill(); ctx.stroke();
+                [[x, y], [x+w, y], [x, y+h], [x+w, y+h]].forEach(([px, py]) => {
+                    ctx.beginPath();
+                    ctx.arc(px, py, s, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.stroke();
                 });
             }
 
             executeCrop() {
-                const canvas = this.elements.editedCanvas, a = this.state.cropArea;
+                const canvas = this.elements.editedCanvas;
+                const a = this.state.cropArea;
                 const temp = document.createElement('canvas');
-                temp.width = a.w; temp.height = a.h;
-                temp.getContext('2d').drawImage(this.bufferCanvas, a.x, a.y, a.w, a.h, 0, 0, a.w, a.h);
-                canvas.width = a.w; canvas.height = a.h;
+                temp.width = Math.round(a.w);
+                temp.height = Math.round(a.h);
+
+                temp.getContext('2d').drawImage(
+                    this.bufferCanvas,
+                    Math.round(a.x), Math.round(a.y), Math.round(a.w), Math.round(a.h),
+                    0, 0, temp.width, temp.height
+                );
+
+                canvas.width = temp.width;
+                canvas.height = temp.height;
                 canvas.getContext('2d').drawImage(temp, 0, 0);
-                this.syncBuffer(); this.toggleCropMode(false);
-                this.updateStatus('✅ ครอบตัดสำเร็จ');
+
+                this.syncBuffer();
+                this.toggleCropMode(false);
+                this.updateStatus('✂️ ครอบตัดเรียบร้อยแล้ว');
             }
 
-            transform(deg, sx, sy) {
-                const canvas = this.elements.editedCanvas, temp = document.createElement('canvas'), tCtx = temp.getContext('2d');
-                if (Math.abs(deg) === 90) { temp.width = canvas.height; temp.height = canvas.width; }
-                else { temp.width = canvas.width; temp.height = canvas.height; }
-                tCtx.translate(temp.width/2, temp.height/2); tCtx.rotate(deg * Math.PI / 180); tCtx.scale(sx, sy);
-                tCtx.drawImage(canvas, -canvas.width/2, -canvas.height/2);
-                canvas.width = temp.width; canvas.height = temp.height;
-                canvas.getContext('2d').drawImage(temp, 0, 0); this.syncBuffer();
+            transform(deg, sx = 1, sy = 1) {
+                const canvas = this.elements.editedCanvas;
+                const temp = document.createElement('canvas');
+                const tCtx = temp.getContext('2d');
+
+                const is90 = Math.abs(deg) === 90 || Math.abs(deg) === 270;
+                temp.width = is90 ? canvas.height : canvas.width;
+                temp.height = is90 ? canvas.width : canvas.height;
+
+                tCtx.translate(temp.width / 2, temp.height / 2);
+                tCtx.rotate(deg * Math.PI / 180);
+                tCtx.scale(sx, sy);
+                tCtx.drawImage(canvas, -canvas.width / 2, -canvas.height / 2);
+
+                canvas.width = temp.width;
+                canvas.height = temp.height;
+                canvas.getContext('2d').drawImage(temp, 0, 0);
+
+                this.syncBuffer();
+
+                if (this.state.isCropping) this.resetCropArea();
             }
 
             download() {
                 const link = document.createElement('a');
                 link.download = `photo-${Date.now()}.png`;
-                link.href = this.elements.editedCanvas.toDataURL();
+                link.href = this.elements.editedCanvas.toDataURL('image/png', 0.92);
                 link.click();
             }
 
@@ -406,7 +546,7 @@
                 this.elements.video.style.display = 'block';
                 this.elements.editedCanvas.style.display = 'none';
                 this.setUIState(false);
-                this.updateStatus('✅ พร้อมถ่ายภาพ');
+                this.updateStatus('✅ พร้อมถ่ายภาพใหม่');
             }
 
             setUIState(captured) {
@@ -415,7 +555,9 @@
                 document.getElementById('captureBtn').disabled = captured;
             }
 
-            updateStatus(msg) { this.elements.status.innerText = msg; }
+            updateStatus(msg) {
+                this.elements.status.innerText = msg;
+            }
         }
 
         window.onload = () => new CameraApp();
